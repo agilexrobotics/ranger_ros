@@ -13,6 +13,7 @@
 #include <ros/ros.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <string>
+#include <geometry_msgs/Twist.h>
 
 #include "ugv_sdk/ranger_base.hpp"
 namespace westonrobot {
@@ -59,7 +60,7 @@ class RangerROSMessenger {
   ros::Time current_time_;
 
   void TwistCmdCallback(const geometry_msgs::Twist::ConstPtr &msg);
-  void LightCmdCallback(const ranger_msgs::RangerLightCmd::ConstPtr &msg);
+//   void LightCmdCallback(const ranger_msgs::RangerLightCmd::ConstPtr &msg);
   void PublishOdometryToROS(double linear, double angular, double dt);
 };
 }  // namespace westonrobot
