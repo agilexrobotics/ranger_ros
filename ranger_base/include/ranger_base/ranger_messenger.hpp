@@ -11,11 +11,16 @@
 #define RANGER_MESSENGER_HPP
 
 #include <ros/ros.h>
+#include <ros/console.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <string>
 #include <geometry_msgs/Twist.h>
 
 #include "ugv_sdk/ranger_base.hpp"
+
+using namespace  ros;
+using namespace  ros::master;
+
 namespace westonrobot {
 class RangerROSMessenger {
  public:

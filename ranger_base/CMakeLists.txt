@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   ugv_sdk
   tf2
   tf2_ros
+  nav_msgs
 )
 
 ## System dependencies are found with CMake's conventions
