@@ -43,15 +43,17 @@ void RangerROSMessenger::PublishStateToROS() {
 
   auto state = ranger_->GetRangerState();
 
-  ranger_msgs::RangerStatus ranger_msg;
-  ranger_msg.header.stamp = current_time_;
-  ranger_msg.linear_velocity = state.motion_state.linear_velocity;
-  ranger_msg.angular_velocity = state.motion_state.angular_velocity;
+  ranger_msgs::RangerStatus status_msg;
+  status_msg.header.stamp = current_time_;
+  status_msg.linear_velocity = state.motion_state.linear_velocity;
+  status_msg.angular_velocity = state.motion_state.angular_velocity;
 
-  ranger_msg.vehicle_state = state.system_state.vehicle_state;
-  ranger_msg.control_mode = state.system_state.control_mode;
-  ranger_msg.error_code = state.system_state.error_code;
-  ranger_msg.battery_voltage = state.system_state.battery_voltage;
+  status_msg.vehicle_state = state.system_state.vehicle_state;
+  status_msg.control_mode = state.system_state.control_mode;
+  status_msg.error_code = state.system_state.error_code;
+  status_msg.battery_voltage = state.system_state.battery_voltage;
+
+  status_publisher_.publish(status_msg);
 
   PublishOdometryToROS(state.motion_state.linear_velocity,
                        state.motion_state.angular_velocity, dt);
@@ -81,7 +83,6 @@ void RangerROSMessenger::PublishOdometryToROS(double linear, double angular,
                                               double dt) {
   linear_speed_ = linear;
   angular_speed_ = angular;
-
 }
 
 }  // namespace westonrobot
