@@ -10,16 +10,16 @@
 #ifndef RANGER_MESSENGER_HPP
 #define RANGER_MESSENGER_HPP
 
-#include <ros/ros.h>
+#include <geometry_msgs/Twist.h>
 #include <ros/console.h>
+#include <ros/ros.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <string>
-#include <geometry_msgs/Twist.h>
-
+#include "ranger_base/ranger_params.hpp"
 #include "ugv_sdk/ranger_base.hpp"
 
-using namespace  ros;
-using namespace  ros::master;
+using namespace ros;
+using namespace ros::master;
 
 namespace westonrobot {
 class RangerROSMessenger {
@@ -54,6 +54,10 @@ class RangerROSMessenger {
   ros::Subscriber light_cmd_subscriber_;
   tf2_ros::TransformBroadcaster tf_broadcaster_;
 
+  static constexpr double l = RangerParams::wheelbase;
+  static constexpr double w = RangerParams::track;
+  static constexpr double steer_angle_tolerance = 0.005;  // ~+-0.287 degrees
+
   // speed variables
   double linear_speed_ = 0.0;
   double angular_speed_ = 0.0;
@@ -65,7 +69,9 @@ class RangerROSMessenger {
   ros::Time current_time_;
 
   void TwistCmdCallback(const geometry_msgs::Twist::ConstPtr &msg);
-//   void LightCmdCallback(const ranger_msgs::RangerLightCmd::ConstPtr &msg);
+  //   void LightCmdCallback(const ranger_msgs::RangerLightCmd::ConstPtr &msg);
+  double ConvertInnerAngleToCentral(double angle);
+  double ConvertCentralAngleToInner(double angle);
   void PublishOdometryToROS(double linear, double angular, double dt);
 };
 }  // namespace westonrobot
