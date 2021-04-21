@@ -47,6 +47,10 @@ void RangerROSMessenger::PublishStateToROS() {
   status_msg.header.stamp = current_time_;
   status_msg.linear_velocity = state.motion_state.linear_velocity;
   status_msg.angular_velocity = state.motion_state.angular_velocity;
+  status_msg.lateral_velocity = state.motion_state.lateral_velocity;
+  status_msg.steering_angle = state.motion_state.steering_angle;
+
+  
 
   status_msg.vehicle_state = state.system_state.vehicle_state;
   status_msg.control_mode = state.system_state.control_mode;

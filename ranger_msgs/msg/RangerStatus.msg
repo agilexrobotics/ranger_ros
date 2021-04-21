@@ -11,6 +11,8 @@ int8 LIGHT_ID_REAR = 1
 # motion state
 float64 linear_velocity
 float64 angular_velocity
+float64 lateral_velocity
+float64 steering_angle
 
 # base state
 uint8 vehicle_state
