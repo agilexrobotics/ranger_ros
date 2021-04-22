@@ -19,6 +19,8 @@
 #include "ascent/Utility.h"
 #include "ranger_base/ranger_params.hpp"
 #include "ugv_sdk/ranger_base.hpp"
+#include <ranger_msgs/RangerStatus.h>
+#include <ranger_msgs/RangerSetting.h>
 
 using namespace ros;
 using namespace ros::master;
@@ -73,6 +75,7 @@ class RangerROSMessenger {
   ros::Publisher status_publisher_;
   ros::Subscriber motion_cmd_subscriber_;
   ros::Subscriber light_cmd_subscriber_;
+  ros::Subscriber ranger_setting_sub_;
   tf2_ros::TransformBroadcaster tf_broadcaster_;
 
   static constexpr double l = RangerParams::wheelbase;
@@ -91,6 +94,7 @@ class RangerROSMessenger {
 
   void TwistCmdCallback(const geometry_msgs::Twist::ConstPtr &msg);
   //   void LightCmdCallback(const ranger_msgs::RangerLightCmd::ConstPtr &msg);
+  void RangerSettingCbk(const ranger_msgs::RangerSetting::ConstPtr &msg);
   double ConvertInnerAngleToCentral(double angle);
   double ConvertCentralAngleToInner(double angle);
   void PublishOdometryToROS(double linear, double angular, double dt);

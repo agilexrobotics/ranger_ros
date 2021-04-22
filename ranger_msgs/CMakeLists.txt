@@ -52,6 +52,7 @@ add_message_files(
   RangerActuatorState.msg
   RangerLightState.msg
   RangerStatus.msg
+  RangerSetting.msg
 )
 
 ## Generate services in the 'srv' folder

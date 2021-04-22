@@ -15,6 +15,7 @@
 #include "ranger_msgs/RangerStatus.h"
 
 using namespace ros;
+using namespace ranger_msgs;
 
 namespace westonrobot {
 RangerROSMessenger::RangerROSMessenger(ros::NodeHandle *nh)
@@ -30,6 +31,8 @@ void RangerROSMessenger::SetupSubscription() {
 
   motion_cmd_subscriber_ = nh_->subscribe<geometry_msgs::Twist>(
       "/cmd_vel", 5, &RangerROSMessenger::TwistCmdCallback, this);
+  ranger_setting_sub_ = nh_->subscribe<ranger_msgs::RangerSetting>(
+      "/ranger_setting", 1, &RangerROSMessenger::RangerSettingCbk, this);
 }
 
 void RangerROSMessenger::PublishStateToROS() {
@@ -58,8 +61,8 @@ void RangerROSMessenger::PublishStateToROS() {
 
   status_publisher_.publish(status_msg);
 
-  PublishOdometryToROS(status_msg.lateral_velocity,
-                       status_msg.steering_angle, dt);
+  PublishOdometryToROS(status_msg.lateral_velocity, status_msg.steering_angle,
+                       dt);
 
   last_time_ = current_time_;
 }
@@ -92,6 +95,32 @@ void RangerROSMessenger::TwistCmdCallback(
   } else {
     std::lock_guard<std::mutex> lg(twist_mutex_);
     current_twist_ = *msg.get();
+  }
+}
+
+void RangerROSMessenger::RangerSettingCbk(
+    const ranger_msgs::RangerSetting::ConstPtr &msg) {
+  auto mode = msg->motion_mode;
+  switch (mode) {
+    case RangerSetting::MOTION_MODE_ACKERMAN: {
+      ranger_->SetMotionMode(RangerSetting::MOTION_MODE_ACKERMAN);
+      break;
+    }
+    case RangerSetting::MOTION_MODE_SLIDE: {
+      ranger_->SetMotionMode(RangerSetting::MOTION_MODE_SLIDE);
+      break;
+    }
+    case RangerSetting::MOTION_MODE_ROUND: {
+      ranger_->SetMotionMode(RangerSetting::MOTION_MODE_ROUND);
+      break;
+    }
+    case RangerSetting::MOTION_MODE_SLOPING: {
+      ranger_->SetMotionMode(RangerSetting::MOTION_MODE_SLOPING);
+      break;
+    }
+    default:
+      ROS_WARN("ranger motion mode not support %d", mode);
+      break;
   }
 }
 double RangerROSMessenger::ConvertInnerAngleToCentral(double angle) {
@@ -130,8 +159,6 @@ void RangerROSMessenger::PublishOdometryToROS(double linear, double angular,
                                               double dt) {
   linear_speed_ = linear;
   angular_angle_ = angular;
-
-
 }
 
 }  // namespace westonrobot
