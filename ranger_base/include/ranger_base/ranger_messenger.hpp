@@ -15,6 +15,8 @@
 #include <ros/ros.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <string>
+#include "ascent/Ascent.h"
+#include "ascent/Utility.h"
 #include "ranger_base/ranger_params.hpp"
 #include "ugv_sdk/ranger_base.hpp"
 
@@ -22,6 +24,25 @@ using namespace ros;
 using namespace ros::master;
 
 namespace westonrobot {
+
+template <typename SystemModel>
+class SystemPropagator {
+ public:
+  asc::state_t Propagate(asc::state_t init_state,
+                         typename SystemModel::control_t u, double t0,
+                         double tf, double dt) {
+    double t = t0;
+    asc::state_t x = init_state;
+    while (t <= tf) {
+      integrator_(SystemModel(u), x, t, dt);
+    }
+    return x;
+  }
+
+ private:
+  asc::RK4 integrator_;
+};
+
 class RangerROSMessenger {
  public:
   explicit RangerROSMessenger(ros::NodeHandle *nh);
@@ -60,7 +81,7 @@ class RangerROSMessenger {
 
   // speed variables
   double linear_speed_ = 0.0;
-  double angular_speed_ = 0.0;
+  double angular_angle_ = 0.0;
   double position_x_ = 0.0;
   double position_y_ = 0.0;
   double theta_ = 0.0;

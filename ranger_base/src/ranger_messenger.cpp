@@ -129,7 +129,8 @@ double RangerROSMessenger::ConvertCentralAngleToInner(double angle) {
 void RangerROSMessenger::PublishOdometryToROS(double linear, double angular,
                                               double dt) {
   linear_speed_ = linear;
-  angular_speed_ = angular;
+  angular_angle_ = angular;
+
 
 }
 
