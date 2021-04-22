@@ -70,6 +70,7 @@ class RangerROSMessenger {
 
   std::mutex twist_mutex_;
   geometry_msgs::Twist current_twist_;
+  uint8_t motion_mode_{0};
 
   ros::Publisher odom_publisher_;
   ros::Publisher status_publisher_;

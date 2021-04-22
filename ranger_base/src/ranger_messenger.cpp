@@ -86,21 +86,35 @@ void RangerROSMessenger::TwistCmdCallback(
     steer_cmd = -RangerParams::max_steer_angle_central;
   }
 
-  if (!simulated_robot_) {
-    double phi_i = ConvertCentralAngleToInner(steer_cmd);
-
-    double phi_degree = -(phi_i / M_PI * 180.0);
-    // std::cout << "set steering angle: " << phi_degree << std::endl;
-    ranger_->SetMotionCommand(msg->linear.x, phi_degree);
-  } else {
+  if (simulated_robot_) {
     std::lock_guard<std::mutex> lg(twist_mutex_);
     current_twist_ = *msg.get();
+    return;
+  }
+
+  switch (motion_mode_) {
+    case RangerSetting::MOTION_MODE_ACKERMAN:
+    case RangerSetting::MOTION_MODE_SLIDE: {
+      double phi_i = ConvertCentralAngleToInner(steer_cmd);
+
+      double phi_degree = -(phi_i / M_PI * 180.0);
+      // std::cout << "set steering angle: " << phi_degree << std::endl;
+      ranger_->SetMotionCommand(msg->linear.x, phi_degree);
+      break;
+    }
+
+    case RangerSetting::MOTION_MODE_ROUND:
+    case RangerSetting::MOTION_MODE_SLOPING: {
+      ranger_->SetMotionCommand(0.0, 0.0, -(msg->linear.x), 0.0);
+      break;
+    }
   }
 }
 
 void RangerROSMessenger::RangerSettingCbk(
     const ranger_msgs::RangerSetting::ConstPtr &msg) {
   auto mode = msg->motion_mode;
+  motion_mode_ = mode;
   switch (mode) {
     case RangerSetting::MOTION_MODE_ACKERMAN: {
       ranger_->SetMotionMode(RangerSetting::MOTION_MODE_ACKERMAN);
