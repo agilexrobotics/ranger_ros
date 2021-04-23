@@ -49,15 +49,79 @@ void RangerROSMessenger::PublishStateToROS() {
 
   ranger_msgs::RangerStatus status_msg;
   status_msg.header.stamp = current_time_;
-  status_msg.linear_velocity = state.motion_state.linear_velocity;
-  status_msg.angular_velocity = state.motion_state.angular_velocity;
-  status_msg.lateral_velocity = state.motion_state.lateral_velocity;
-  status_msg.steering_angle = state.motion_state.steering_angle / 180.0 * M_PI;
 
   status_msg.vehicle_state = state.system_state.vehicle_state;
   status_msg.control_mode = state.system_state.control_mode;
   status_msg.error_code = state.system_state.error_code;
   status_msg.battery_voltage = state.system_state.battery_voltage;
+
+  // linear_velocity, angular_velocity, central steering_angle
+  double l_v = 0.0, a_v = 0.0, phi = 0.0;
+  // x , y direction linear velocity, motion radius
+  double x_v = 0.0, y_v = 0.0, radius = 0.0;
+
+  double phi_i = -state.motion_state.steering_angle / 180.0 * M_PI;
+
+  //  ROS_WARN("%f %f %f %f", state.motion_state.linear_velocity,
+  //           state.motion_state.angular_velocity,
+  //           state.motion_state.lateral_velocity,
+  //           state.motion_state.steering_angle);
+
+  switch (motion_mode_) {
+    case RangerSetting::MOTION_MODE_ACKERMAN: {
+      l_v = state.motion_state.linear_velocity;
+      double r = l / std::tan(phi_i) + w;
+      phi = ConvertInnerAngleToCentral(phi_i);
+      a_v = state.motion_state.linear_velocity / r;
+      x_v = l_v * std::cos(phi);
+      if (l_v >= 0.0001) {
+        y_v = l_v * std::sin(phi);
+      } else {
+        y_v = l_v * std::sin(-phi);
+      }
+      radius = r;
+      break;
+    }
+    case RangerSetting::MOTION_MODE_SLIDE: {
+      l_v = state.motion_state.linear_velocity;
+      phi = phi_i;
+      a_v = 0.0;
+      x_v = l_v * std::cos(phi);
+      y_v = l_v * std::sin(phi);
+      radius = 0.0;
+      break;
+    }
+    case RangerSetting::MOTION_MODE_ROUND: {
+      l_v = 0.0;
+      phi = std::fabs(phi_i);
+      a_v = -2.0 * state.motion_state.linear_velocity /
+            (RangerParams::track * M_SQRT2);
+      x_v = 0.0;
+      y_v = 0.0;
+      radius = a_v / state.motion_state.linear_velocity;
+      break;
+    }
+    case RangerSetting::MOTION_MODE_SLOPING: {
+      l_v = -state.motion_state.linear_velocity;
+      phi = std::fabs(phi_i);
+      a_v = 0.0;
+      x_v = 0.0;
+      y_v = l_v;
+      radius = 0.0;
+      break;
+    }
+  }
+
+  //  ROS_WARN("l_v: %f  a_v: %f  phi_i: %f  x_v: %f y_v: %f radius: %f", l_v,
+  //  a_v, phi_i, x_v, y_v, radius);
+
+  status_msg.linear_velocity = l_v;
+  status_msg.angular_velocity = a_v;
+  status_msg.lateral_velocity = 0.0;
+  status_msg.steering_angle = phi;
+  status_msg.x_linear_vel = x_v;
+  status_msg.y_linear_vel = y_v;
+  status_msg.motion_radius = radius;
 
   status_publisher_.publish(status_msg);
 
@@ -79,6 +143,7 @@ void RangerROSMessenger::GetCurrentMotionCmdForSim(double &linear,
 void RangerROSMessenger::TwistCmdCallback(
     const geometry_msgs::Twist::ConstPtr &msg) {
   double steer_cmd = msg->angular.z;
+  // TODO: different mode have different limit
   if (steer_cmd > RangerParams::max_steer_angle_central) {
     steer_cmd = RangerParams::max_steer_angle_central;
   }
@@ -93,8 +158,7 @@ void RangerROSMessenger::TwistCmdCallback(
   }
 
   switch (motion_mode_) {
-    case RangerSetting::MOTION_MODE_ACKERMAN:
-    case RangerSetting::MOTION_MODE_SLIDE: {
+    case RangerSetting::MOTION_MODE_ACKERMAN: {
       double phi_i = ConvertCentralAngleToInner(steer_cmd);
 
       double phi_degree = -(phi_i / M_PI * 180.0);
@@ -102,7 +166,11 @@ void RangerROSMessenger::TwistCmdCallback(
       ranger_->SetMotionCommand(msg->linear.x, phi_degree);
       break;
     }
-
+    case RangerSetting::MOTION_MODE_SLIDE: {
+      double phi_degree = -(steer_cmd / M_PI * 180.0);
+      ranger_->SetMotionCommand(msg->linear.x, phi_degree);
+      break;
+    }
     case RangerSetting::MOTION_MODE_ROUND:
     case RangerSetting::MOTION_MODE_SLOPING: {
       ranger_->SetMotionCommand(0.0, 0.0, -(msg->linear.x), 0.0);

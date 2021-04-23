@@ -13,6 +13,9 @@ float64 linear_velocity
 float64 angular_velocity
 float64 lateral_velocity
 float64 steering_angle
+float64 x_linear_vel
+float64 y_linear_vel
+float64 motion_radius
 
 # base state
 uint8 vehicle_state

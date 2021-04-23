@@ -15,7 +15,6 @@ struct RangerParams {
       0.36;  // in meter (left & right wheel distance)
   static constexpr double wheelbase =
       0.36;  // in meter (front & rear wheel distance)
-  static constexpr double wheel_radius = 0.165;  // in meter
 
   static constexpr double max_linear_speed = 1.5;      // in m/s
   static constexpr double max_angular_speed = 0.7853;  // in rad/s
