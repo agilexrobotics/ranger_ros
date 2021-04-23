@@ -11,6 +11,8 @@
 #define RANGER_MESSENGER_HPP
 
 #include <geometry_msgs/Twist.h>
+#include <ranger_msgs/RangerSetting.h>
+#include <ranger_msgs/RangerStatus.h>
 #include <ros/console.h>
 #include <ros/ros.h>
 #include <tf2_ros/transform_broadcaster.h>
@@ -19,8 +21,6 @@
 #include "ascent/Utility.h"
 #include "ranger_base/ranger_params.hpp"
 #include "ugv_sdk/ranger_base.hpp"
-#include <ranger_msgs/RangerStatus.h>
-#include <ranger_msgs/RangerSetting.h>
 
 using namespace ros;
 using namespace ros::master;
@@ -81,6 +81,7 @@ class RangerROSMessenger {
 
   static constexpr double l = RangerParams::wheelbase;
   static constexpr double w = RangerParams::track;
+  static constexpr double s = w / 2.0;                    // half of track
   static constexpr double steer_angle_tolerance = 0.005;  // ~+-0.287 degrees
 
   // speed variables

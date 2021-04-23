@@ -70,7 +70,7 @@ void RangerROSMessenger::PublishStateToROS() {
   switch (motion_mode_) {
     case RangerSetting::MOTION_MODE_ACKERMAN: {
       l_v = state.motion_state.linear_velocity;
-      double r = l / std::tan(phi_i) + w;
+      double r = s / std::tan(phi_i) + s;
       phi = ConvertInnerAngleToCentral(phi_i);
       a_v = state.motion_state.linear_velocity / r;
       x_v = l_v * std::cos(phi);
