@@ -114,7 +114,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+  INCLUDE_DIRS include
 #  LIBRARIES ranger_base
 #  CATKIN_DEPENDS controller_manager geometry_msgs ranger_msgs roscpp roslaunch sensor_msgs topic_tools ugv_sdk
 #  DEPENDS system_lib
