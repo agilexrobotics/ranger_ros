@@ -74,7 +74,7 @@ void RangerROSMessenger::PublishStateToROS() {
       phi = ConvertInnerAngleToCentral(phi_i);
       a_v = state.motion_state.linear_velocity / r;
       x_v = l_v * std::cos(phi);
-      if (l_v >= 0.0001) {
+      if (l_v >= 0.0) {
         y_v = l_v * std::sin(phi);
       } else {
         y_v = l_v * std::sin(-phi);
