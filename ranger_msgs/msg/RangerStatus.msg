@@ -16,6 +16,7 @@ float64 steering_angle
 float64 x_linear_vel
 float64 y_linear_vel
 float64 motion_radius
+uint8 current_motion_mode
 
 # base state
 uint8 vehicle_state
@@ -24,7 +25,7 @@ uint16 error_code
 float64 battery_voltage
 
 # motor state
-RangerActuatorState[4] actuator_states
+RangerActuatorState[8] actuator_states
 
 # light state
 bool light_control_enabled

@@ -54,6 +54,15 @@ roslaunch ranger_bringup ranger_teleop_keyboard.launch
 
 ## Examples
 
+### 0. enable can control
+
+```shell
+  robot->Connect("can0");
+  robot->EnableCommandedMode();
+```
+
+
+
 ### 1. set motion mode
 
 see `ranger_ros/ranger_examples/src/change_the_mode.cpp` for more details

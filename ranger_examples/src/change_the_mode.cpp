@@ -11,6 +11,7 @@
 #include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
 
+#include <ranger_msgs/RangerSetting.h>
 #include "ranger_base/ranger_messenger.hpp"
 #include "ugv_sdk/ranger_base.hpp"
 
@@ -28,6 +29,12 @@ int main(int argc, char *argv[]) {
 
   robot->Connect("can0");
   robot->EnableCommandedMode();
+
+  // 0 Arckmann 1 Slide 2 round, 3 Sloping
+  robot->SetMotionMode(0);
+  //  robot->SetMotionMode(1);
+  //  robot->SetMotionMode(2);
+  //  robot->SetMotionMode(3);
 
   // publish robot state at 50Hz while listening to twist commands
   ros::Rate rate(50);

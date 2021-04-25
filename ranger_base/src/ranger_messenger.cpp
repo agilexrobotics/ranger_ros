@@ -54,6 +54,9 @@ void RangerROSMessenger::PublishStateToROS() {
   status_msg.control_mode = state.system_state.control_mode;
   status_msg.error_code = state.system_state.error_code;
   status_msg.battery_voltage = state.system_state.battery_voltage;
+  status_msg.current_motion_mode = state.current_motion_mode.motion_mode;
+
+  motion_mode_ = status_msg.current_motion_mode;
 
   // linear_velocity, angular_velocity, central steering_angle
   double l_v = 0.0, a_v = 0.0, phi = 0.0;
@@ -62,17 +65,16 @@ void RangerROSMessenger::PublishStateToROS() {
 
   double phi_i = -state.motion_state.steering_angle / 180.0 * M_PI;
 
-  //  ROS_WARN("%f %f %f %f", state.motion_state.linear_velocity,
-  //           state.motion_state.angular_velocity,
-  //           state.motion_state.lateral_velocity,
-  //           state.motion_state.steering_angle);
-
   switch (motion_mode_) {
     case RangerSetting::MOTION_MODE_ACKERMAN: {
       l_v = state.motion_state.linear_velocity;
-      double r = s / std::tan(phi_i) + s;
+      double r = s / std::tan(std::fabs(phi_i)) + s;
       phi = ConvertInnerAngleToCentral(phi_i);
-      a_v = state.motion_state.linear_velocity / r;
+      if (phi > steer_angle_tolerance) {
+        a_v = state.motion_state.linear_velocity / r;
+      } else {
+        a_v = -state.motion_state.linear_velocity / r;
+      }
       x_v = l_v * std::cos(phi);
       if (l_v >= 0.0) {
         y_v = l_v * std::sin(phi);
@@ -143,13 +145,6 @@ void RangerROSMessenger::GetCurrentMotionCmdForSim(double &linear,
 void RangerROSMessenger::TwistCmdCallback(
     const geometry_msgs::Twist::ConstPtr &msg) {
   double steer_cmd = msg->angular.z;
-  // TODO: different mode have different limit
-  if (steer_cmd > RangerParams::max_steer_angle_central) {
-    steer_cmd = RangerParams::max_steer_angle_central;
-  }
-  if (steer_cmd < -RangerParams::max_steer_angle_central) {
-    steer_cmd = -RangerParams::max_steer_angle_central;
-  }
 
   if (simulated_robot_) {
     std::lock_guard<std::mutex> lg(twist_mutex_);
@@ -159,14 +154,27 @@ void RangerROSMessenger::TwistCmdCallback(
 
   switch (motion_mode_) {
     case RangerSetting::MOTION_MODE_ACKERMAN: {
+      if (steer_cmd > RangerParams::max_steer_angle_central) {
+        steer_cmd = RangerParams::max_steer_angle_central;
+      }
+      if (steer_cmd < -RangerParams::max_steer_angle_central) {
+        steer_cmd = -RangerParams::max_steer_angle_central;
+      }
+
       double phi_i = ConvertCentralAngleToInner(steer_cmd);
 
       double phi_degree = -(phi_i / M_PI * 180.0);
-      // std::cout << "set steering angle: " << phi_degree << std::endl;
       ranger_->SetMotionCommand(msg->linear.x, phi_degree);
       break;
     }
     case RangerSetting::MOTION_MODE_SLIDE: {
+      if (steer_cmd > RangerParams::max_steer_angle_slide) {
+        steer_cmd = RangerParams::max_steer_angle_slide;
+      }
+      if (steer_cmd < -RangerParams::max_steer_angle_slide) {
+        steer_cmd = -RangerParams::max_steer_angle_slide;
+      }
+
       double phi_degree = -(steer_cmd / M_PI * 180.0);
       ranger_->SetMotionCommand(msg->linear.x, phi_degree);
       break;

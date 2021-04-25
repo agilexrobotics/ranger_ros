@@ -19,8 +19,9 @@ struct RangerParams {
   static constexpr double max_linear_speed = 1.5;      // in m/s
   static constexpr double max_angular_speed = 0.7853;  // in rad/s
   static constexpr double max_speed_cmd = 10.0;        // in rad/s
-  // max central angle: pi/2
-  static constexpr double max_steer_angle_central = 1.5708;
+
+  static constexpr double max_steer_angle_central = 0.53385; //~= 30.58 degree
+  static constexpr double max_steer_angle_slide = 0.69813; // 40 degree
 };
 }  // namespace westonrobot
 #endif  // RANGER_PARAMS_HPP

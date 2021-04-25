@@ -17,8 +17,12 @@
 
 using namespace westonrobot;
 
-std::shared_ptr<RangerBase> robot;
+void Ackermann();
+void Slide();
+void Round();
+void Sloping();
 
+std::shared_ptr<RangerBase> robot;
 
 int main(int argc, char *argv[]) {
   // setup ROS node
@@ -31,8 +35,10 @@ int main(int argc, char *argv[]) {
   robot->Connect("can0");
   robot->EnableCommandedMode();
 
-
-
+  Ackermann();
+  // Slide();
+  // Round();
+  // Sloping();
 
   // publish robot state at 50Hz while listening to twist commands
   ros::Rate rate(50);
@@ -42,3 +48,7 @@ int main(int argc, char *argv[]) {
   }
   return 0;
 }
+void Ackermann(){}
+void Slide(){}
+void Round(){}
+void Sloping(){}
