@@ -14,6 +14,9 @@
 #include <sensor_msgs/JointState.h>
 #include <tf/transform_broadcaster.h>
 
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "ranger_base/ranger_messenger.hpp"
 #include "ugv_sdk/ranger_base.hpp"
 
@@ -21,10 +24,23 @@ using namespace westonrobot;
 
 std::shared_ptr<RangerBase> robot;
 
+void SignalHandler(int s) {
+  printf("Caught signal %d, program exit\n", s);
+  exit(EXIT_FAILURE);
+}
+void controlSingal() {
+  struct sigaction sigIntHandler;
+  sigIntHandler.sa_handler = SignalHandler;
+  sigemptyset(&sigIntHandler.sa_mask);
+  sigIntHandler.sa_flags = 0;
+  sigaction(SIGINT, &sigIntHandler, NULL);
+}
 int main(int argc, char **argv) {
   // setup ROS node
   ros::init(argc, argv, "ranger_node");
   ros::NodeHandle node(""), private_node("~");
+
+  controlSingal();
 
   // instantiate a robot object
   robot = std::make_shared<RangerBase>();

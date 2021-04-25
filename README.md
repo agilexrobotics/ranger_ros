@@ -119,5 +119,7 @@ void Sloping() {
 }
 ```
 
+## use odometry
 
+* subscribe `/odom` topic 
 
