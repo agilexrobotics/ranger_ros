@@ -57,8 +57,8 @@ roslaunch ranger_bringup ranger_teleop_keyboard.launch
 ### 0. enable can control
 
 ```shell
-  robot->Connect("can0");
-  robot->EnableCommandedMode();
+robot->Connect("can0");
+robot->EnableCommandedMode();
 ```
 
 
@@ -68,7 +68,15 @@ roslaunch ranger_bringup ranger_teleop_keyboard.launch
 see `ranger_ros/ranger_examples/src/change_the_mode.cpp` for more details
 
 ```c++
+robot->Connect("can0");
+robot->EnableCommandedMode();
 
+// 0 Arckmann 1 Slide 2 round, 3 Sloping
+// 0 前后阿克曼 1 横移  2 自旋  3 侧移 
+robot->SetMotionMode(0);
+//  robot->SetMotionMode(1);
+//  robot->SetMotionMode(2);
+//  robot->SetMotionMode(3);
 ```
 
 
@@ -78,7 +86,37 @@ see `ranger_ros/ranger_examples/src/change_the_mode.cpp` for more details
 see `ranger_ros/ranger_examples/src/control_the_car.cpp` for more details
 
 ```c++
+robot->SetMotionCommand(0.1, 30.0/180.0 * M_PI); // steer angle = 30°
 
+// or write them in a function
+void Ackermann() {
+  robot->SetMotionMode(0);
+  // or
+  robot->SetMotionMode(RangerSetting::MOTION_MODE_ACKERMAN);
+  l_v = 0.1;                  // m/s
+  angle_z = 30 / 180 * M_PI;  // rad
+}
+void Slide() {
+  robot->SetMotionMode(1);
+  // or
+  robot->SetMotionMode(RangerSetting::MOTION_MODE_SLIDE);
+  l_v = 0.1;                  // m/s
+  angle_z = 30 / 180 * M_PI;  // rad
+}
+void Round() {
+  robot->SetMotionMode(2);
+  // or
+  robot->SetMotionMode(RangerSetting::MOTION_MODE_ROUND);
+  l_v = 0.1;
+  // angle_z is not used
+}
+void Sloping() {
+  robot->SetMotionMode(3);
+  // or
+  robot->SetMotionMode(RangerSetting::MOTION_MODE_SLOPING);
+  l_v = 0.1;
+  // angle_z is not used
+}
 ```
 
 

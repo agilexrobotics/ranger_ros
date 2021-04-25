@@ -36,6 +36,8 @@ int main(int argc, char *argv[]) {
   //  robot->SetMotionMode(2);
   //  robot->SetMotionMode(3);
 
+  robot->SetMotionCommand(0.1, 30.0/180.0 * M_PI); // steer angle = 30°
+
   // publish robot state at 50Hz while listening to twist commands
   ros::Rate rate(50);
   while (ros::ok()) {
