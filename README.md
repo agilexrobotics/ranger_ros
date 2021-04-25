@@ -13,6 +13,20 @@
 * The `ugv_sdk` communicate with the car by `can protocol`
 * The `ranger_ros` package call the function `GetRangerState` to get the newest machine information, call the `SetMotionCommand` to set linear velocity 、angle、etc, call the `SetMotionMode` to change the motion mode
 * Ranger mini have 4 type of motion mode. see ranger mini manual from    [agilex develop manuals](https://github.com/westonrobot/ugv_sdk/tree/master/docs) 
+* pub `ranger_ros` can set motion mode
+* subscribe `ranger_status` can get the robot status
+
+## Params
+
+see `ranger_base/launch/ranger_mini_base.launch`
+
+* is_ranger_mini :   ranger mini or ranger pro
+* port_name:   can port name , usually is can0
+* simulated_robot:   sim robot for test or not
+* odom_frame:   the odometry frame name in tf
+* base_frame:   the base link frame name in tf
+* odom_topic_name:   the odometry topic name
+* **pub_odom_tf:  publish tf transformation of odometry frame or not.  if true publish** 
 
 ## Build
 
@@ -121,5 +135,5 @@ void Sloping() {
 
 ## use odometry
 
-* subscribe `/odom` topic 
+* subscribe `/odom` topic
 
