@@ -32,6 +32,9 @@ class BicycleKinematics
       double v{0.0};
       double delta{0.0};
     }
+
+    double v;
+    double delta;
   };
   using control_t = CtrlInput;
 
@@ -42,6 +45,7 @@ class BicycleKinematics
 
  private:
   control_t u_{0.0, 0.0};
+
   static constexpr double L = RangerParams::wheelbase;
 };
 }  // namespace westonrobot

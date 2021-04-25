@@ -5,6 +5,7 @@
     <arg name="is_ranger_mini" value="true" />
     <!-- <arg name="model_xacro" default="$(find ranger_description)/urdf/ranger_v2.xacro" /> -->
     <arg name="odom_topic_name" default="odom" />
+    <arg name="pub_odom_tf" default="false" />
 
     <include file="$(find ranger_base)/launch/ranger_mini_base.launch">
         <arg name="port_name" default="$(arg port_name)" />

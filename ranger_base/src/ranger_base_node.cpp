@@ -42,6 +42,7 @@ int main(int argc, char **argv) {
   private_node.param<int>("control_rate", messenger.sim_control_rate_, 50);
   private_node.param<std::string>("odom_topic_name", messenger.odom_topic_name_,
                                   std::string("odom"));
+  private_node.param<bool>("pub_odom_tf", messenger.pub_odom_tf_, false);
 
   if (!messenger.simulated_robot_) {
     // connect to robot and setup ROS subscription

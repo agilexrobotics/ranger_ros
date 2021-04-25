@@ -33,6 +33,8 @@ void RangerROSMessenger::SetupSubscription() {
       "/cmd_vel", 5, &RangerROSMessenger::TwistCmdCallback, this);
   ranger_setting_sub_ = nh_->subscribe<ranger_msgs::RangerSetting>(
       "/ranger_setting", 1, &RangerROSMessenger::RangerSettingCbk, this);
+
+  curr_transform_ = Eigen::Matrix4d::Identity();
 }
 
 void RangerROSMessenger::PublishStateToROS() {
@@ -127,8 +129,7 @@ void RangerROSMessenger::PublishStateToROS() {
 
   status_publisher_.publish(status_msg);
 
-  PublishOdometryToROS(status_msg.lateral_velocity, status_msg.steering_angle,
-                       dt);
+  PublishOdometryToROS(l_v, a_v, x_v, y_v, dt);
 
   last_time_ = current_time_;
 }
@@ -245,10 +246,66 @@ double RangerROSMessenger::ConvertCentralAngleToInner(double angle) {
   }
   return phi_i;
 }
-void RangerROSMessenger::PublishOdometryToROS(double linear, double angular,
-                                              double dt) {
+void RangerROSMessenger::PublishOdometryToROS(double linear, double angle_vel,
+                                              double x_linear_vel,
+                                              double y_linear_vel, double dt) {
   linear_speed_ = linear;
-  angular_angle_ = angular;
+  angular_vel_ = angle_vel;
+  x_linear_vel_ = x_linear_vel;
+  y_linear_vel_ = y_linear_vel;
+  double theta = angular_vel_ * dt;
+
+  // update
+  position_x_ +=
+      cos(theta_) * x_linear_vel_ * dt - sin(theta_) * y_linear_vel_ * dt;
+  position_y_ +=
+      sin(theta_) * x_linear_vel_ * dt + cos(theta_) * y_linear_vel_ * dt;
+  theta_ = theta_ + angular_vel_ * dt;
+
+  if (theta_ > M_PI) {
+    theta_ -= 2 * M_PI;
+  } else if (theta < -M_PI) {
+    theta_ += 2 * M_PI;
+  }
+  //  printf("theta_ %f,  theta cos angle: %f\n", curr_transform_(0, 0));
+
+  geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(theta_);
+
+  if (pub_odom_tf_) {
+    // publish tf transformation
+    geometry_msgs::TransformStamped tf_msg;
+    tf_msg.header.stamp = current_time_;
+    tf_msg.header.frame_id = odom_frame_;
+    tf_msg.child_frame_id = base_frame_;
+
+    tf_msg.transform.translation.x = position_x_;
+    tf_msg.transform.translation.y = position_y_;
+    tf_msg.transform.translation.z = 0.0;
+    tf_msg.transform.rotation = odom_quat;
+
+    tf_broadcaster_.sendTransform(tf_msg);
+  }
+  // publish odometry and tf messages
+  nav_msgs::Odometry odom_msg;
+  odom_msg.header.stamp = current_time_;
+  odom_msg.header.frame_id = odom_frame_;
+  odom_msg.child_frame_id = base_frame_;
+
+  odom_msg.pose.pose.position.x = position_x_;
+  odom_msg.pose.pose.position.y = position_y_;
+  odom_msg.pose.pose.position.z = 0.0;
+  odom_msg.pose.pose.orientation = odom_quat;
+
+  odom_msg.twist.twist.linear.x = x_linear_vel_;
+  odom_msg.twist.twist.linear.y = y_linear_vel_;
+  odom_msg.twist.twist.angular.z = angular_vel_;
+
+  //  std::cerr << "linear: " << linear_speed_ << " , angular vel: " <<
+  //  angular_vel_
+  //            << " , pose: (" << position_x_ << "," << position_y_ << ","
+  //            << theta_ << ")" << std::endl;
+
+  odom_publisher_.publish(odom_msg);
 }
 
 }  // namespace westonrobot

@@ -19,8 +19,12 @@
 #include <string>
 #include "ascent/Ascent.h"
 #include "ascent/Utility.h"
+#include "ranger_base/ranger_model.hpp"
 #include "ranger_base/ranger_params.hpp"
 #include "ugv_sdk/ranger_base.hpp"
+
+//#include <Eigen/Core>
+#include <eigen3/Eigen/Core>
 
 using namespace ros;
 using namespace ros::master;
@@ -53,6 +57,7 @@ class RangerROSMessenger {
   std::string odom_frame_;
   std::string base_frame_;
   std::string odom_topic_name_;
+  bool pub_odom_tf_;
 
   bool simulated_robot_ = false;
   int sim_control_rate_ = 50;
@@ -85,11 +90,18 @@ class RangerROSMessenger {
   static constexpr double steer_angle_tolerance = 0.005;  // ~+-0.287 degrees
 
   // speed variables
-  double linear_speed_ = 0.0;
-  double angular_angle_ = 0.0;
+  double linear_speed_ = 0.0;  // inear velocity
+  double angular_vel_ = 0.0;   // angule velocity
+  double x_linear_vel_ = 0.0;  // x direction linear velocity
+  double y_linear_vel_ = 0.0;  // y direction linear velocity
   double position_x_ = 0.0;
   double position_y_ = 0.0;
   double theta_ = 0.0;
+
+  // the transform of current position based on the origin
+  Eigen::Matrix4d curr_transform_{};
+
+  SystemPropagator<BicycleKinematics> model_;
 
   ros::Time last_time_;
   ros::Time current_time_;
@@ -99,7 +111,9 @@ class RangerROSMessenger {
   void RangerSettingCbk(const ranger_msgs::RangerSetting::ConstPtr &msg);
   double ConvertInnerAngleToCentral(double angle);
   double ConvertCentralAngleToInner(double angle);
-  void PublishOdometryToROS(double linear, double angular, double dt);
+  void PublishOdometryToROS(double linear, double angle_vel,
+                            double x_linear_vel, double y_linear_vel,
+                            double dt);
 };
 }  // namespace westonrobot
 
