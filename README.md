@@ -126,9 +126,9 @@ or publish by command line
 ```shell
 # 0 Ackrmann, 1 Slide, 2 Round, 3 Sloping
 # 0 前后阿克曼，1 斜移,   2 自旋,  3  侧移
-rostopic pub -1 /ranger_setting ranger_msgs/RangerSetting -- '1'
+rostopic pub -1 /ranger_setting ranger_msgs/RangerSetting -- '[0, 0, setting_frame]' '1'
 
-rostopic pub -1 /cmd_vel geometry_msgs/Twist -- '[0.1, 0.0, 0.0]' '[0.0, 0.0, 0.52358]'  # 0.52358 = 30 degree
+rostopic pub /cmd_vel geometry_msgs/Twist -- '[0.1, 0.0, 0.0]' '[0.0, 0.0, 0.52358]'  # 0.52358 = 30 degree
 ```
 
 
