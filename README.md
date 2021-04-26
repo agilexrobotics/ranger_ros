@@ -128,7 +128,7 @@ or publish by command line
 # 0 前后阿克曼，1 斜移,   2 自旋,  3  侧移
 rostopic pub -1 /ranger_setting ranger_msgs/RangerSetting -- '[0, 0, setting_frame]' '1'
 
-rostopic pub /cmd_vel geometry_msgs/Twist -- '[0.1, 0.0, 0.0]' '[0.0, 0.0, 0.52358]'  # 0.52358 = 30 degree
+rostopic pub /cmd_vel geometry_msgs/Twist --rate 50 '[0.1, 0.0, 0.0]' '[0.0, 0.0, 0.52358]'  # 0.52358 = 30 degree
 ```
 
 
