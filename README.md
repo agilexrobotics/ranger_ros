@@ -77,7 +77,96 @@ sudo apt install ros-$ROS_DISTRO-teleop-twist-keyboard
 roslaunch ranger_bringup ranger_teleop_keyboard.launch
 ```
 
-## Examples
+
+
+
+
+
+
+----
+
+## Ros Topic Examples
+
+* Input:   the car linear velocity and the heading angle
+* Output:  total linear velocity, x direction velocity, y direction velocity, angular velocity, central steer angle and rotate radius, .etc
+
+### Publish topic to control the car
+
+see `ranger_ros/ranger_examples/src/input.cpp` for details
+
+```c++
+////----------------control by ros topic---------------------------------
+ros::Publisher motion_mode =
+    node.advertise<ranger_msgs::RangerSetting>("/ranger_setting", 1);
+ranger_msgs::RangerSetting setting;
+setting.motion_mode = ranger_msgs::RangerSetting::MOTION_MODE_ACKERMAN;
+motion_mode.publish(setting);
+
+////------------------move by ros topic --------------------------------
+ros::Publisher move_cmd =
+    node.advertise<geometry_msgs::Twist>("/cmd_vel", 10);
+geometry_msgs::Twist cmd;
+cmd.linear.x = 0.1;                   // the motor will run at 0.1m/s
+cmd.angular.z = 30.0 / 180.0 * M_PI;  // the heading angle of the car
+
+// publish robot state at 50Hz while listening to twist commands
+ros::Rate rate(50);
+while (ros::ok()) {
+    ros::spinOnce();
+
+    // /cmd_vel topic must send at 50Hz, even stop need send 0m/s
+    move_cmd.publish(cmd);
+
+    rate.sleep();
+}
+```
+
+or publish by command line
+
+```shell
+rostopic pub -1 /cmd_vel geometry_msgs/Twist -- '[0.1, 0.0, 0.0]' '[0.0, 0.0, 0.52358]'  # 0.52358 = 30 degree
+```
+
+
+
+### Subcribe the car output
+
+see `ranger_ros/ranger_examples/src/output.cpp` for details
+
+```c++
+ros::Subscriber status_sub = node.subscribe<ranger_msgs::RangerStatus>(
+    "/ranger_status", 10, StatusCallback);
+```
+
+```c++
+void StatusCallback(ranger_msgs::RangerStatus::ConstPtr msg) {
+    std::cout << "linear velocity: " << msg->linear_velocity << std::endl;
+    std::cout << "angular velocity: " << msg->angular_velocity << std::endl;
+    std::cout << "x direction linear velocity: " << msg->x_linear_vel << std::endl;
+    std::cout << "y direction linear linear velocity: " << msg->y_linear_vel << std::endl;
+    std::cout << "rotate radius: " << msg->motion_radius << std::endl;
+    std::cout << "car heading angle: " << msg->steering_angle << std::endl;
+    // ...etc
+}
+```
+
+
+
+or show the data by rostopic 
+
+```shell
+rostopic echo /ranger_status
+```
+
+
+
+
+
+
+
+----
+
+## Sdk API Examples
 
 ### 0. enable can control
 

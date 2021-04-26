@@ -47,6 +47,7 @@ int main(int argc, char *argv[]) {
   // publish robot state at 50Hz while listening to twist commands
   ros::Rate rate(50);
   while (ros::ok()) {
+    // send command in 50hz, nor will timeout
     robot->SetMotionCommand(l_v, angle_z);
     ros::spinOnce();
     rate.sleep();

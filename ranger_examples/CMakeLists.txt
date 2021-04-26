@@ -143,6 +143,10 @@ add_executable(change_the_mode src/change_the_mode.cpp)
 target_link_libraries(change_the_mode ${catkin_LIBRARIES})
 add_executable(control_the_car src/control_the_car.cpp)
 target_link_libraries(control_the_car ${catkin_LIBRARIES})
+add_executable(input src/input.cpp)
+target_link_libraries(input ${catkin_LIBRARIES})
+add_executable(output src/output.cpp)
+target_link_libraries(output ${catkin_LIBRARIES})
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
