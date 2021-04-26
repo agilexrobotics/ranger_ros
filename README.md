@@ -37,12 +37,23 @@ dependencies:
 assume your ros workspace is ~/agilex_ws
 
 ```shell
+# install ugv_sdk
 cd ~/agilex_ws/src
 git clone https://github.com/westonrobot/ugv_sdk.git
-git clone https://github.com/westonrobot/ranger_ros.git
+cd ugv_sdk
+git checkout -b v2.x origin/v2.x
+cd ../
+catkin_make install --pkg ugv_sdk
 
-cd ..
-catkin_make 
+source devel/setup.bash
+
+# install ranger_ros
+git clone https://github.com/westonrobot/ranger_ros.git
+cd ranger_ros/ranger_base/ascent
+mkdir -p build && cd build && sudo make install
+cd ~/agilex_ws/
+catkin_make install
+
 
 # for install
 catkin_make install
