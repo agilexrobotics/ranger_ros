@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
 
   // publish robot state at 50Hz while listening to twist commands
   ros::Rate rate(50);
-  while (true) {
+  while (ros::ok()) {
     if (!messenger.simulated_robot_) {
       messenger.PublishStateToROS();
     } else {
