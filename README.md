@@ -45,13 +45,15 @@ git checkout -b v2.x origin/v2.x
 cd ../
 catkin_make install --pkg ugv_sdk
 
+# source the packages
 source devel/setup.bash
 
 # install ranger_ros
+cd ~/agilex_ws/src/
 git clone https://github.com/westonrobot/ranger_ros.git
 
-#cd ranger_ros/ranger_base/ascent
-#mkdir -p build && cd build && cmake .. && sudo make install
+cd ranger_ros/ranger_base/ascent
+mkdir -p build && cd build && cmake -DBUILD_TESTING=OFF .. && sudo make install
 
 cd ~/agilex_ws/
 catkin_make install
