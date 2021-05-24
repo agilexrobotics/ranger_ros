@@ -52,12 +52,16 @@ source devel/setup.bash
 cd ~/agilex_ws/src/
 git clone https://github.com/westonrobot/ranger_ros.git
 
+# install the ascent library at first
 cd ranger_ros/ranger_base/ascent
 mkdir -p build && cd build && cmake -DBUILD_TESTING=OFF .. && sudo make install
 
 cd ~/agilex_ws/
-catkin_make install
+catkin_make install # or just catkin_make
 
+# if you catch error:  ranger_msgs/RangerSetting.h: No such file or directory
+# then install `ranger_msgs` first
+catkin_make install --pkg ranger_msgs
 
 # for install
 catkin_make install
