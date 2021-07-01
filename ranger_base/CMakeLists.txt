@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0.2)
 project(ranger_base)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -21,9 +21,6 @@ find_package(catkin REQUIRED COMPONENTS
   nav_msgs
   async_port
 )
-
-# install the ascent library to use it
-#add_subdirectory(ascent)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -134,12 +131,17 @@ include_directories(
   ${EIGEN3_INCLUDE_DIR}
 )
 
+add_library(ascent INTERFACE)
+target_include_directories(ascent INTERFACE
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+	$<INSTALL_INTERFACE:include>)
+
 add_library(ranger_messenger STATIC src/ranger_messenger.cpp src/ranger_model.cpp)
-target_link_libraries(ranger_messenger ${catkin_LIBRARIES})
+target_link_libraries(ranger_messenger ${catkin_LIBRARIES} ascent)
 add_dependencies(ranger_messenger ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_executable(ranger_base_node src/ranger_base_node.cpp)
-target_link_libraries(ranger_base_node ranger_messenger ${catkin_LIBRARIES})
+target_link_libraries(ranger_base_node ranger_messenger ascent ${catkin_LIBRARIES})
 
 
 ## Rename C++ executable without prefix
