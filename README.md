@@ -39,7 +39,7 @@ assume your ros workspace is ~/agilex_ws
 ```shell
 # install ugv_sdk
 cd ~/agilex_ws/src
-git clone https://github.com/westonrobot/ugv_sdk.git
+git clone https://github.com/agilexrobotics/ugv_sdk.git
 cd ugv_sdk
 git checkout -b v2.x origin/v2.x
 cd ../
@@ -50,7 +50,7 @@ source devel/setup.bash
 
 # install ranger_ros
 cd ~/agilex_ws/src/
-git clone https://github.com/westonrobot/ranger_ros.git
+git clone https://github.com/agilexrobotics/ranger_ros.git
 
 # install the ascent library at first
 cd ranger_ros/ranger_base/ascent
