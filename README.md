@@ -39,6 +39,7 @@ assume your ros workspace is ~/agilex_ws
 ```shell
 # install ugv_sdk
 cd ~/agilex_ws/src
+git clone https://github.com/westonrobot/async_port.git
 git clone https://github.com/westonrobot/ugv_sdk.git
 cd ugv_sdk
 git checkout -b v2.x origin/v2.x
