@@ -19,7 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf2
   tf2_ros
   nav_msgs
-  async_port
+#  async_port
 )
 
 ## System dependencies are found with CMake's conventions

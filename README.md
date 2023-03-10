@@ -51,7 +51,7 @@ source devel/setup.bash
 
 # install ranger_ros
 cd ~/agilex_ws/src/
-git clone https://github.com/westonrobot/ranger_ros.git
+git clone https://github.com/agilexrobotics/ranger_ros.git
 
 # install the ascent library at first
 cd ranger_ros/ranger_base/ascent
