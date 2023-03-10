@@ -53,6 +53,8 @@ add_message_files(
   RangerLightState.msg
   RangerStatus.msg
   RangerSetting.msg
+  RangerBmsStatus.msg
+  RobotStatus.msg
 )
 
 ## Generate services in the 'srv' folder

@@ -18,11 +18,12 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "ranger_base/ranger_messenger.hpp"
-#include "ugv_sdk/ranger_base.hpp"
+#include "ugv_sdk/details/robot_base/ranger_base.hpp"
+#include "ugv_sdk/utilities/protocol_detector.hpp"
 
 using namespace westonrobot;
 
-std::shared_ptr<RangerBase> robot;
+std::shared_ptr<RangerRobot> robot;
 
 void SignalHandler(int s) {
   printf("Caught signal %d, program exit\n", s);
@@ -43,7 +44,7 @@ int main(int argc, char **argv) {
   controlSingal();
 
   // instantiate a robot object
-  robot = std::make_shared<RangerBase>();
+  robot = std::make_shared<RangerRobot>();
   RangerROSMessenger messenger(robot.get(), &node);
 
   // fetch parameters before connecting to robot
@@ -59,6 +60,26 @@ int main(int argc, char **argv) {
   private_node.param<std::string>("odom_topic_name", messenger.odom_topic_name_,
                                   std::string("odom"));
   private_node.param<bool>("pub_odom_tf", messenger.pub_odom_tf_, false);
+
+  // check protocol version
+  ProtocolDectctor detector;
+  try
+  {
+      detector.Connect("can0");
+      auto proto = detector.DetectProtocolVersion(5);
+      if (proto == ProtocolVersion::AGX_V2) {
+          std::cout << "Detected protocol: AGX_V2" << std::endl;;
+      }
+      else {
+          std::cout << "Detected protocol: UNKONWN" << std::endl;
+          return -1;
+      }
+  }
+  catch (const std::exception error)
+  {
+      ROS_ERROR("please bringup up can or make sure can port exist");
+      ros::shutdown();
+  }
 
   if (!messenger.simulated_robot_) {
     // connect to robot and setup ROS subscription
