@@ -62,7 +62,7 @@ int main(int argc, char **argv) {
   private_node.param<bool>("pub_odom_tf", messenger.pub_odom_tf_, false);
 
   // check protocol version
-  ProtocolDectctor detector;
+  ProtocolDetector detector;
   try
   {
       detector.Connect("can0");
