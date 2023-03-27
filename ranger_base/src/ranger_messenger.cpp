@@ -90,7 +90,8 @@ void RangerROSMessenger::PublishStateToROS() {
   }
 
   auto state = ranger_->GetRobotState();
-  auto motor_state = ranger_->GetMotorState();
+  //auto motor_state = ranger_->GetMotorState();
+  auto motor_state = ranger_->GetActuatorState();
 
 
   ranger_msgs::RangerStatus status_msg;
@@ -125,9 +126,12 @@ void RangerROSMessenger::PublishStateToROS() {
     }
     else if(phi_i > 0)
     {
-      i_v= (motor_state.motor_speed_state.speed_3 + motor_state.motor_speed_state.speed_4)/2.0;
+      //i_v= (motor_state.motor_speed_state.speed_3 + motor_state.motor_speed_state.speed_4)/2.0;
 
-      phi_i = (fabs(motor_state.motor_angle_state.angle_7) + fabs(motor_state.motor_angle_state.angle_8))/2;
+      //phi_i = (fabs(motor_state.motor_angle_state.angle_7) + fabs(motor_state.motor_angle_state.angle_8))/2;
+      i_v= (motor_state.actuator_hs_state[3].rpm + motor_state.actuator_hs_state[4].rpm)/2.0;
+
+      phi_i = (fabs(motor_state.actuator_hs_state[3].pulse_count) + fabs(motor_state.actuator_hs_state[4].pulse_count))/2;
       if(phi_i == 0)
       {
         return;
@@ -151,9 +155,14 @@ void RangerROSMessenger::PublishStateToROS() {
     }
     else
     {
-      ROS_DEBUG_NAMED("aaa","speed_1:%f speed_2:%f",motor_state.motor_speed_state.speed_1,motor_state.motor_speed_state.speed_2);
-      i_v= (motor_state.motor_speed_state.speed_1 + motor_state.motor_speed_state.speed_2)/2.0;
-      phi_i = (fabs(motor_state.motor_angle_state.angle_5) + fabs(motor_state.motor_angle_state.angle_6))/2;
+      //ROS_DEBUG_NAMED("aaa","speed_1:%f speed_2:%f",motor_state.motor_speed_state.speed_1,motor_state.motor_speed_state.speed_2);
+      //i_v= (motor_state.motor_speed_state.speed_1 + motor_state.motor_speed_state.speed_2)/2.0;
+      //phi_i = (fabs(motor_state.motor_angle_state.angle_5) + fabs(motor_state.motor_angle_state.angle_6))/2;
+      
+      ROS_DEBUG_NAMED("aaa","speed_1:%f speed_2:%f",motor_state.actuator_hs_state[1].rpm,motor_state.actuator_hs_state[2].rpm);
+      i_v= (motor_state.actuator_hs_state[1].rpm + motor_state.actuator_hs_state[2].rpm)/2.0;
+      phi_i = (fabs(motor_state.actuator_hs_state[1].pulse_count) + fabs(motor_state.actuator_hs_state[2].pulse_count))/2;
+      
       phi_i = phi_i/180.0*M_PI;
       double c,r_c,v_c,l,w,k;
       if(i_v != 0)
