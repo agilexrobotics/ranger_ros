@@ -20,7 +20,7 @@
 
 see `ranger_base/launch/ranger_mini_base.launch`
 
-* is_ranger_mini :   ranger mini or ranger pro
+* robot_type :   ranger-mini or ranger 
 * port_name:   can port name , usually is can0
 * simulated_robot:   sim robot for test or not
 * odom_frame:   the odometry frame name in tf
@@ -74,7 +74,7 @@ catkin_make install
 # run ranger_ros
 cd ~/agilex_ws
 source devel/setup.bash
-roslaunch ranger_bringup ranger_minimal.launch
+roslaunch ranger_bringup ranger_robot_base.launch
 
 ```
 
@@ -100,8 +100,6 @@ roslaunch ranger_bringup ranger_teleop_keyboard.launch
 * Output:  total linear velocity, x direction velocity, y direction velocity, angular velocity, central steer angle and rotate radius, .etc
 
 ### Publish topic to control the car
-
-see `ranger_ros/ranger_examples/src/input.cpp` for details
 
 ```c++
 ////----------------control by ros topic---------------------------------
@@ -170,7 +168,7 @@ or show the data by rostopic
 ```shell
 rostopic echo /ranger_status
 ```
-----
+
 ## use odometry
 
 * subscribe `/odom` topic
