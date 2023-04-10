@@ -106,7 +106,7 @@ class RangerROSMessenger {
 
   ros::Publisher odom_publisher_;
   ros::Publisher status_publisher_;
-//  ros::Publisher bms_publisher_;
+  ros::Publisher bms_publisher_;
   ros::Publisher robot_status_publisher_;
   ros::Subscriber motion_cmd_subscriber_;
   ros::Subscriber light_cmd_subscriber_;

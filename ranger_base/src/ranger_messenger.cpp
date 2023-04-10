@@ -36,6 +36,7 @@ void RangerROSMessenger::SetupSubscription() {
 
   std::string robot_type;
   ros::NodeHandle private_nh("~");
+//  cout << private_nh.getParam("robot_type",robot_type)<<endl;
   private_nh.param<string>("robot_type",robot_type,"ranger");
   if(robot_type == "ranger")
   {
@@ -66,6 +67,7 @@ void RangerROSMessenger::SetupSubscription() {
   odom_publisher_ = nh_->advertise<nav_msgs::Odometry>(odom_topic_name_, 50);
   status_publisher_ =
       nh_->advertise<ranger_msgs::RangerStatus>("/ranger_status", 10);
+  bms_publisher_ = nh_->advertise<ranger_msgs::RangerBmsStatus>("/BMS_status",10);
   robot_status_publisher_ = nh_->advertise<ranger_msgs::RobotStatus>("/robot_status",10);
 
   motion_cmd_subscriber_ = nh_->subscribe<geometry_msgs::Twist>(
@@ -73,11 +75,19 @@ void RangerROSMessenger::SetupSubscription() {
   ranger_setting_sub_ = nh_->subscribe<ranger_msgs::RangerSetting>(
       "/ranger_setting", 1, &RangerROSMessenger::RangerSettingCbk, this);
 
+//  get_version_ser_ = nh_->advertiseService("/get_ranger_version",&RangerROSMessenger::GetVersionCB,this);
 
   curr_transform_ = Eigen::Matrix4d::Identity();
+//  ranger_->checkVersionRequest();
+//  ROS_INFO(">>");
 }
 
-
+//bool RangerROSMessenger::GetVersionCB(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
+//{
+//  std::string data = ranger_->checkVersionRequest();
+//  ROS_INFO("%s",data.c_str());
+//  return true;
+//}
 
 void RangerROSMessenger::PublishStateToROS() {
   current_time_ = ros::Time::now();
@@ -90,9 +100,19 @@ void RangerROSMessenger::PublishStateToROS() {
   }
 
   auto state = ranger_->GetRobotState();
-  //auto motor_state = ranger_->GetMotorState();
-  auto motor_state = ranger_->GetActuatorState();
+  auto motor_state = ranger_->GetMotorState();
+  auto bms_state = ranger_->GetBmsState();
 
+  ROS_DEBUG_NAMED("feedback","Angle_5:%f Angle_6:%f Angle_7:%f Angle_8:%f",
+                  motor_state.motor_angle_state.angle_5,
+                  motor_state.motor_angle_state.angle_6,
+                  motor_state.motor_angle_state.angle_7,
+                  motor_state.motor_angle_state.angle_8);
+  ROS_DEBUG_NAMED("feedback","speed_1:%f speed_2:%f speed_3:%f speed_4:%f",
+                  motor_state.motor_speed_state.speed_1,
+                  motor_state.motor_speed_state.speed_2,
+                  motor_state.motor_speed_state.speed_3,
+                  motor_state.motor_speed_state.speed_4);
 
   ranger_msgs::RangerStatus status_msg;
   ranger_msgs::RobotStatus robot_status;
@@ -126,12 +146,14 @@ void RangerROSMessenger::PublishStateToROS() {
     }
     else if(phi_i > 0)
     {
-      //i_v= (motor_state.motor_speed_state.speed_3 + motor_state.motor_speed_state.speed_4)/2.0;
+      i_v= (motor_state.motor_speed_state.speed_3 + motor_state.motor_speed_state.speed_4)/2.0;
+//      c_v = (RangerParams::wheelbase * cos(fabs(phi_i))+RangerParams::track*sin(fabs(phi_i))) * i_v/
+//          RangerParams::wheelbase;
+//      l_v = state.motion_state.linear_velocity;
+//      radius = RangerParams::wheelbase * cos(fabs(phi_i)) / (2.0*sin(fabs(phi_i))) + RangerParams::track / 2.0;
+//      a_v = -(fabs(c_v) / radius);
 
-      //phi_i = (fabs(motor_state.motor_angle_state.angle_7) + fabs(motor_state.motor_angle_state.angle_8))/2;
-      i_v= (motor_state.actuator_hs_state[3].rpm + motor_state.actuator_hs_state[4].rpm)/2.0;
-
-      phi_i = (fabs(motor_state.actuator_hs_state[3].pulse_count) + fabs(motor_state.actuator_hs_state[4].pulse_count))/2;
+      phi_i = (fabs(motor_state.motor_angle_state.angle_7) + fabs(motor_state.motor_angle_state.angle_8))/2;
       if(phi_i == 0)
       {
         return;
@@ -145,6 +167,7 @@ void RangerROSMessenger::PublishStateToROS() {
       l = robot_params.wheelbase;
       w =  robot_params.track;
       a_v = 2*fabs(i_v)*sin(phi_i)/l;
+//      c = atan(l*tan(phi_i)/(w*tan(phi_i)+l));
       c = atan(l*tan(phi_i)/(l-w*tan(phi_i)));
       r_c = l/(2*sin(c));
       v_c = fabs(a_v * r_c) * k;
@@ -152,17 +175,23 @@ void RangerROSMessenger::PublishStateToROS() {
       l_v = v_c;
       radius = r_c;
       a_v = -a_v;
+      ROS_DEBUG_NAMED("new_formula","phi_i:%f  i_v:%f",phi_i,i_v);
+      ROS_DEBUG_NAMED("new_formula","a_v:%f",-a_v);
+      ROS_DEBUG_NAMED("new_formula","c:%f",c);
+      ROS_DEBUG_NAMED("new_formula","r_c:%f",r_c);
+      ROS_DEBUG_NAMED("new_formula","l_v:%f",v_c);
+      ROS_DEBUG_NAMED("new_formula","\n");
     }
     else
     {
-      //ROS_DEBUG_NAMED("aaa","speed_1:%f speed_2:%f",motor_state.motor_speed_state.speed_1,motor_state.motor_speed_state.speed_2);
-      //i_v= (motor_state.motor_speed_state.speed_1 + motor_state.motor_speed_state.speed_2)/2.0;
-      //phi_i = (fabs(motor_state.motor_angle_state.angle_5) + fabs(motor_state.motor_angle_state.angle_6))/2;
-      
-      ROS_DEBUG_NAMED("aaa","speed_1:%f speed_2:%f",motor_state.actuator_hs_state[1].rpm,motor_state.actuator_hs_state[2].rpm);
-      i_v= (motor_state.actuator_hs_state[1].rpm + motor_state.actuator_hs_state[2].rpm)/2.0;
-      phi_i = (fabs(motor_state.actuator_hs_state[1].pulse_count) + fabs(motor_state.actuator_hs_state[2].pulse_count))/2;
-      
+      ROS_DEBUG_NAMED("aaa","speed_1:%f speed_2:%f",motor_state.motor_speed_state.speed_1,motor_state.motor_speed_state.speed_2);
+      i_v= (motor_state.motor_speed_state.speed_1 + motor_state.motor_speed_state.speed_2)/2.0;
+//      c_v = (RangerParams::wheelbase * cos(fabs(phi_i))+RangerParams::track*sin(fabs(phi_i))) * i_v/RangerParams::wheelbase;
+//      l_v = state.motion_state.linear_velocity;
+//      radius = RangerParams::wheelbase * cos(fabs(phi_i)) / (2.0*sin(fabs(phi_i))) + RangerParams::track / 2.0;
+//      a_v = fabs(c_v) / radius;
+
+      phi_i = (fabs(motor_state.motor_angle_state.angle_5) + fabs(motor_state.motor_angle_state.angle_6))/2;
       phi_i = phi_i/180.0*M_PI;
       double c,r_c,v_c,l,w,k;
       if(i_v != 0)
@@ -180,8 +209,17 @@ void RangerROSMessenger::PublishStateToROS() {
 
       l_v = v_c;
       radius = r_c;
+      ROS_DEBUG_NAMED("new_formula","phi_i:%f  i_v:%f",phi_i,i_v);
+      ROS_DEBUG_NAMED("new_formula","a_v:%f",a_v);
+      ROS_DEBUG_NAMED("new_formula","c:%f",c);
+      ROS_DEBUG_NAMED("new_formula","r_c:%f",r_c);
+      ROS_DEBUG_NAMED("new_formula","l_v:%f",v_c);
+      ROS_DEBUG_NAMED("new_formula","\n");
     }
     x_v = l_v;
+    ROS_DEBUG_NAMED("akman_velocity_fb",
+              "liner_v:%f angle_v:%f radius:%f" ,
+              l_v,a_v,radius);
     break;
     }
     case RangerSetting::MOTION_MODE_SLIDE: {
@@ -218,6 +256,8 @@ void RangerROSMessenger::PublishStateToROS() {
     }
   }
 
+  //  ROS_WARN("l_v: %f  a_v: %f  phi_i: %f  x_v: %f y_v: %f radius: %f", l_v,
+  //  a_v, phi_i, x_v, y_v, radius);
 
   status_msg.linear_velocity = l_v;
   status_msg.angular_velocity = a_v;
@@ -237,6 +277,13 @@ void RangerROSMessenger::PublishStateToROS() {
 
   PublishOdometryToROS(l_v, a_v, x_v, y_v, dt);
 
+  ranger_msgs::RangerBmsStatus bms_status;
+  bms_status.SOC                = bms_state.bmsbasic.battery_soc;
+  bms_status.SOH                = bms_state.bmsbasic.battery_soh;
+  bms_status.batteryCurrent     = bms_state.bmsbasic.current;
+  bms_status.batteryVoltage     = bms_state.bmsbasic.voltage;
+  bms_status.batteryTemperature = bms_state.bmsbasic.temperature;
+  bms_publisher_.publish(bms_status);
 
   robot_status.base_state = status_msg.vehicle_state;
   robot_status.control_mode = status_msg.control_mode;
@@ -244,6 +291,9 @@ void RangerROSMessenger::PublishStateToROS() {
   robot_status.linear_velocity = status_msg.linear_velocity;
   robot_status.angular_velocity = status_msg.angular_velocity;
   robot_status_publisher_.publish(robot_status);
+
+//  robot_status.fault_code = status_msg.
+//  cout << bms_status << endl;
 
   last_time_ = current_time_;
 }
@@ -311,6 +361,7 @@ void RangerROSMessenger::TwistCmdCallback( const geometry_msgs::Twist::ConstPtr 
     }
     case RangerSetting::MOTION_MODE_ROUND:
     case RangerSetting::MOTION_MODE_SLOPING: {
+      //ranger_->SetMotionCommand(0.0, 0.0, -(msg->angular.z / 1.68), 0.0);
 
       float l_v , w,a_v;
       a_v = msg->angular.z;
