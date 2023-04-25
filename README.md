@@ -88,10 +88,6 @@ roslaunch ranger_bringup ranger_teleop_keyboard.launch
 
 
 
-
-
-
-
 ----
 
 ## Ros Topic Examples

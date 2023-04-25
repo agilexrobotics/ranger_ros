@@ -318,7 +318,11 @@ void RangerROSMessenger::TwistCmdCallback( const geometry_msgs::Twist::ConstPtr 
 
   double radius;
   steer_cmd = AngelVelocity2Angel(*msg,radius);
-  if(radius < robot_params.min_turn_radius)
+  if(msg->linear.y!=0){
+    motion_mode_ = RangerSetting::MOTION_MODE_SLIDE;
+    ranger_->SetMotionMode(RangerSetting::MOTION_MODE_SLIDE);
+  }
+  else if(radius < robot_params.min_turn_radius)
   {
     motion_mode_ = RangerSetting::MOTION_MODE_ROUND;
     ranger_->SetMotionMode(RangerSetting::MOTION_MODE_ROUND);
@@ -347,6 +351,7 @@ void RangerROSMessenger::TwistCmdCallback( const geometry_msgs::Twist::ConstPtr 
       break;
     }
     case RangerSetting::MOTION_MODE_SLIDE: {
+      steer_cmd = -1.0*atan(msg->linear.y/msg->linear.x);
       if (steer_cmd > robot_params.max_steer_angle_slide) {
         steer_cmd = robot_params.max_steer_angle_slide;
       }
@@ -356,7 +361,8 @@ void RangerROSMessenger::TwistCmdCallback( const geometry_msgs::Twist::ConstPtr 
 
       //double phi_degree = -(steer_cmd / M_PI * 180.0);
       double phi_degree = steer_cmd / M_PI * 180.0;
-      ranger_->SetMotionCommand(msg->linear.x, phi_degree);
+      double vel = msg->linear.x>0?1.0:-1.0;
+      ranger_->SetMotionCommand(vel*sqrt(msg->linear.x*msg->linear.x+msg->linear.y*msg->linear.y), phi_degree);
       break;
     }
     case RangerSetting::MOTION_MODE_ROUND:

@@ -21,7 +21,8 @@ struct RangerParams {
   static constexpr double max_speed_cmd = 10.0;        // in rad/s
 
   static constexpr double max_steer_angle_central = 0.6981; //~= 30.58 degree
-  static constexpr double max_steer_angle_slide = 0.69813; // 40 degree
+  //static constexpr double max_steer_angle_slide = 0.69813; // 40 degree
+  static constexpr double max_steer_angle_slide = 1.570; // 40 degree
   static constexpr double max_round_angle = 1.0057; // 40 degree
   static constexpr double min_turn_radius = 0.810330349 /*0.810330349*/; //ranger-mini 0.536
 };
@@ -36,7 +37,8 @@ struct RangerMiniParams {
   static constexpr double max_speed_cmd = 10.0;        // in rad/s
 
   static constexpr double max_steer_angle_central = 0.6981; //~= 30.58 degree
-  static constexpr double max_steer_angle_slide = 0.69813; // 40 degree
+  //static constexpr double max_steer_angle_slide = 0.69813; // 40 degree
+  static constexpr double max_steer_angle_slide = 1.570; // 40 degree
   static constexpr double max_round_angle = 0.935671;
   static constexpr double min_turn_radius = 0.536 /*0.810330349*/; //ranger-mini 0.536
 };
