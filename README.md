@@ -20,7 +20,7 @@
 
 see `ranger_base/launch/ranger_mini_base.launch`
 
-* robot_type :   ranger-mini or ranger 
+* is_ranger_mini :   ranger mini or ranger pro
 * port_name:   can port name , usually is can0
 * simulated_robot:   sim robot for test or not
 * odom_frame:   the odometry frame name in tf
@@ -51,7 +51,7 @@ source devel/setup.bash
 
 # install ranger_ros
 cd ~/agilex_ws/src/
-git clone https://github.com/agilexrobotics/ranger_ros.git
+git clone https://github.com/westonrobot/ranger_ros.git
 
 # install the ascent library at first
 cd ranger_ros/ranger_base/ascent
@@ -74,7 +74,7 @@ catkin_make install
 # run ranger_ros
 cd ~/agilex_ws
 source devel/setup.bash
-roslaunch ranger_bringup ranger_robot_base.launch
+roslaunch ranger_bringup ranger_minimal.launch
 
 ```
 
@@ -86,8 +86,6 @@ sudo apt install ros-$ROS_DISTRO-teleop-twist-keyboard
 roslaunch ranger_bringup ranger_teleop_keyboard.launch
 ```
 
-
-
 ----
 
 ## Ros Topic Examples
@@ -96,6 +94,8 @@ roslaunch ranger_bringup ranger_teleop_keyboard.launch
 * Output:  total linear velocity, x direction velocity, y direction velocity, angular velocity, central steer angle and rotate radius, .etc
 
 ### Publish topic to control the car
+
+see `ranger_ros/ranger_examples/src/input.cpp` for details
 
 ```c++
 ////----------------control by ros topic---------------------------------
@@ -129,12 +129,16 @@ or publish by command line
 ```shell
 # 0 Ackrmann, 1 Slide, 2 Round, 3 Sloping
 # 0 前后阿克曼，1 斜移,   2 自旋,  3  侧移
-rostopic pub -1 /ranger_setting ranger_msgs/RangerSetting -- '[0, 0, setting_frame]' '1'
+# ros包会根据速度指令消息自动切换运动模式
 
-rostopic pub /cmd_vel geometry_msgs/Twist --rate 50 '[0.1, 0.0, 0.0]' '[0.0, 0.0, 0.52358]'  # 0.52358 = 30 degree
+#if you send twist message with only linear.x and angular.z,ackrmann or round mode will be activated
+rostopic pub /cmd_vel geometry_msgs/Twist '[0.1, 0.0, 0.0]' '[0.0, 0.0, 0.52358]'
+rostopic pub /cmd_vel geometry_msgs/Twist '[0.0, 0.0, 0.0]' '[0.0, 0.0, 0.52358]'
+
+#if you send twist message with only linear.x and linear.y, Sloping mode will be activated
+rostopic pub /cmd_vel geometry_msgs/Twist '[0.2, 0.3, 0.0]' '[0.0, 0.0, 0.0]'
+rostopic pub /cmd_vel geometry_msgs/Twist '[0.0, 0.3, 0.0]' '[0.0, 0.0, 0.0]'
 ```
-
-
 
 ### Subcribe the car output
 
@@ -157,12 +161,75 @@ void StatusCallback(ranger_msgs::RangerStatus::ConstPtr msg) {
 }
 ```
 
-
-
 or show the data by rostopic 
 
 ```shell
 rostopic echo /ranger_status
+```
+
+----
+
+## Sdk API Examples
+
+### 0. enable can control
+
+```shell
+robot->Connect("can0");
+robot->EnableCommandedMode();
+```
+
+### 1. set motion mode
+
+see `ranger_ros/ranger_examples/src/change_the_mode.cpp` for more details
+
+```c++
+robot->Connect("can0");
+robot->EnableCommandedMode();
+
+// 0 Arckmann 1 Slide 2 round, 3 Sloping
+// 0 前后阿克曼 1 横移  2 自旋  3 侧移 
+robot->SetMotionMode(0);
+//  robot->SetMotionMode(1);
+//  robot->SetMotionMode(2);
+//  robot->SetMotionMode(3);
+```
+
+### 2. set the movement linear velocity and angle of the car
+
+see `ranger_ros/ranger_examples/src/control_the_car.cpp` for more details
+
+```c++
+robot->SetMotionCommand(0.1, 30.0/180.0 * M_PI); // steer angle = 30°
+
+// or write them in a function
+void Ackermann() {
+  robot->SetMotionMode(0);
+  // or
+  robot->SetMotionMode(RangerSetting::MOTION_MODE_ACKERMAN);
+  l_v = 0.1;                  // m/s
+  angle_z = 30 / 180 * M_PI;  // rad
+}
+void Slide() {
+  robot->SetMotionMode(1);
+  // or
+  robot->SetMotionMode(RangerSetting::MOTION_MODE_SLIDE);
+  l_v = 0.1;                  // m/s
+  angle_z = 30 / 180 * M_PI;  // rad
+}
+void Round() {
+  robot->SetMotionMode(2);
+  // or
+  robot->SetMotionMode(RangerSetting::MOTION_MODE_ROUND);
+  l_v = 0.1;
+  // angle_z is not used
+}
+void Sloping() {
+  robot->SetMotionMode(3);
+  // or
+  robot->SetMotionMode(RangerSetting::MOTION_MODE_SLOPING);
+  l_v = 0.1;
+  // angle_z is not used
+}
 ```
 
 ## use odometry
