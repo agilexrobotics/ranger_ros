@@ -26,12 +26,12 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
-  RangerActuatorState.msg
-  RangerLightState.msg
-  RangerStatus.msg
-  RangerSetting.msg
-  RangerBmsStatus.msg
-  RobotStatus.msg
+  ActuatorState.msg
+  ActuatorStateArray.msg
+  DriverState.msg
+  MotionState.msg
+  MotorState.msg
+  SystemState.msg
 )
 
 ## Generate services in the 'srv' folder
