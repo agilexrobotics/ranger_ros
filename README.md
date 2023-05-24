@@ -1,175 +1,56 @@
-# ranger_ros
+# ROS Packages for Ranger Robot
 
-## ranger
+This repository contains ROS support packages for the Ranger robot bases to provide a ROS interface to the robot.
 
-* ranger mini  is the name of the following car
+## Supported hardware
 
-  ![ranger mini](./images/ranger_mini.png)
+* Ranger Mini V1.0
+<img src="./docs/ranger_mini_v1.png" width="350" />
 
-## Communicate Flow
+* Ranger Mini V2.0
+<img src="./docs/ranger_mini_v2.png" width="350" />
 
-![ranger_mini](./images/ranger_mini_car.png)
+* Ranger
+<img src="./docs/ranger.png" width="300" />
 
-* The `ugv_sdk` communicate with the car by `can protocol`
-* The `ranger_ros` package call the function `GetRangerState` to get the newest machine information, call the `SetMotionCommand` to set linear velocity 、angle、etc, call the `SetMotionMode` to change the motion mode
-* Ranger mini have 4 type of motion mode. see ranger mini manual from    [agilex develop manuals](https://github.com/westonrobot/ugv_sdk/tree/master/docs) 
-* pub `ranger_ros` can set motion mode
-* subscribe `ranger_status` can get the robot status
+## Build the package
 
-## Params
+* Install dependencies (for the ugv_sdk)
 
-see `ranger_base/launch/ranger_mini_base.launch`
-
-* robot_type :   ranger-mini or ranger 
-* port_name:   can port name , usually is can0
-* simulated_robot:   sim robot for test or not
-* odom_frame:   the odometry frame name in tf
-* base_frame:   the base link frame name in tf
-* odom_topic_name:   the odometry topic name
-* **pub_odom_tf:  publish tf transformation of odometry frame or not.  if true publish** 
-
-## Build
-
-dependencies:
-
-* ROS1 melodic or newer
-
-assume your ros workspace is ~/agilex_ws
-
-```shell
-# install ugv_sdk
-cd ~/agilex_ws/src
-git clone https://github.com/westonrobot/async_port.git
-git clone https://github.com/westonrobot/ugv_sdk.git
-cd ugv_sdk
-git checkout -b v2.x origin/v2.x
-cd ../
-catkin_make install --pkg ugv_sdk
-
-# source the packages
-source devel/setup.bash
-
-# install ranger_ros
-cd ~/agilex_ws/src/
-git clone https://github.com/agilexrobotics/ranger_ros.git
-
-# install the ascent library at first
-cd ranger_ros/ranger_base/ascent
-mkdir -p build && cd build && cmake -DBUILD_TESTING=OFF .. && sudo make install
-
-cd ~/agilex_ws/
-catkin_make install # or just catkin_make
-
-# if you catch error:  ranger_msgs/RangerSetting.h: No such file or directory
-# then install `ranger_msgs` first
-catkin_make install --pkg ranger_msgs
-
-# for install
-catkin_make install
+```bash
+$ sudo apt install libasio-dev
 ```
 
-## Run
-
-```shell
-# run ranger_ros
-cd ~/agilex_ws
-source devel/setup.bash
-roslaunch ranger_bringup ranger_robot_base.launch
+* Clone and build the packages in a catkin workspace
 
 ```
-
-use keyboard to control
-> the default motion mode is Head-Back  Ackermann
-```shell
-# if you want to remote control the car by keyboard
-sudo apt install ros-$ROS_DISTRO-teleop-twist-keyboard
-roslaunch ranger_bringup ranger_teleop_keyboard.launch
+$ cd ~/catkin_ws/src
+$ git clone https://github.com/westonrobot/ugv_sdk.git
+$ git clone https://github.com/westonrobot/ranger_ros.git
+$ cd ..
+$ catkin_make
 ```
 
+## ROS interface
 
+### Parameters
 
+* robot_type (string): ranger/ranger_mini_v1/**ranger_mini_v2**
+* can_device (string): **can0**
+* base_frame (string): **base_link**
+* odom_frame (string): **odom**
+* publish_odom (bool): **true**
 
+### Published topics
 
+* /system_state (ranger_msgs::SystemState)
+* /motion_state (ranger_msgs::MotionState)
+* /actuator_state (ranger_msgs::ActuatorStateArray)
+* /odom (nav_msgs::Odometry)
+* /battery_state (sensor_msgs::BatteryState)
 
+### Subscribed topics
 
-----
+* /cmd_vel (geometry_msgs::Twist)
 
-## Ros Topic Examples
-
-* Input:   the car linear velocity and the heading angle
-* Output:  total linear velocity, x direction velocity, y direction velocity, angular velocity, central steer angle and rotate radius, .etc
-
-### Publish topic to control the car
-
-```c++
-////----------------control by ros topic---------------------------------
-ros::Publisher motion_mode =
-    node.advertise<ranger_msgs::RangerSetting>("/ranger_setting", 1);
-ranger_msgs::RangerSetting setting;
-setting.motion_mode = ranger_msgs::RangerSetting::MOTION_MODE_ACKERMAN;
-motion_mode.publish(setting);
-
-////------------------move by ros topic --------------------------------
-ros::Publisher move_cmd =
-    node.advertise<geometry_msgs::Twist>("/cmd_vel", 10);
-geometry_msgs::Twist cmd;
-cmd.linear.x = 0.1;                   // the motor will run at 0.1m/s
-cmd.angular.z = 30.0 / 180.0 * M_PI;  // the heading angle of the car
-
-// publish robot state at 50Hz while listening to twist commands
-ros::Rate rate(50);
-while (ros::ok()) {
-    ros::spinOnce();
-
-    // /cmd_vel topic must send at 50Hz, even stop need send 0m/s
-    move_cmd.publish(cmd);
-
-    rate.sleep();
-}
-```
-
-or publish by command line
-
-```shell
-# 0 Ackrmann, 1 Slide, 2 Round, 3 Sloping
-# 0 前后阿克曼，1 斜移,   2 自旋,  3  侧移
-rostopic pub -1 /ranger_setting ranger_msgs/RangerSetting -- '[0, 0, setting_frame]' '1'
-
-rostopic pub /cmd_vel geometry_msgs/Twist --rate 50 '[0.1, 0.0, 0.0]' '[0.0, 0.0, 0.52358]'  # 0.52358 = 30 degree
-```
-
-
-
-### Subcribe the car output
-
-see `ranger_ros/ranger_examples/src/output.cpp` for details
-
-```c++
-ros::Subscriber status_sub = node.subscribe<ranger_msgs::RangerStatus>(
-    "/ranger_status", 10, StatusCallback);
-```
-
-```c++
-void StatusCallback(ranger_msgs::RangerStatus::ConstPtr msg) {
-    std::cout << "linear velocity: " << msg->linear_velocity << std::endl;
-    std::cout << "angular velocity: " << msg->angular_velocity << std::endl;
-    std::cout << "x direction linear velocity: " << msg->x_linear_vel << std::endl;
-    std::cout << "y direction linear linear velocity: " << msg->y_linear_vel << std::endl;
-    std::cout << "rotate radius: " << msg->motion_radius << std::endl;
-    std::cout << "car heading angle: " << msg->steering_angle << std::endl;
-    // ...etc
-}
-```
-
-
-
-or show the data by rostopic 
-
-```shell
-rostopic echo /ranger_status
-```
-
-## use odometry
-
-* subscribe `/odom` topic
-
+### Services
