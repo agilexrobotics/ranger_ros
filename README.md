@@ -15,10 +15,10 @@ This repository contains ROS support packages for the Ranger robot bases to prov
 
 ## Build the package
 
-* Install dependencies (for the ugv_sdk)
+* Install dependencies
 
 ```bash
-$ sudo apt install libasio-dev
+$ sudo apt install libasio-dev libboost-all-dev
 ```
 
 * Clone and build the packages in a catkin workspace
@@ -35,11 +35,13 @@ $ catkin_make
 
 ### Parameters
 
-* robot_type (string): ranger/ranger_mini_v1/**ranger_mini_v2**
 * can_device (string): **can0**
+* robot_model (string): **ranger**/ranger_mini_v1/ranger_mini_v2
+* update_rate (int): **50**
 * base_frame (string): **base_link**
 * odom_frame (string): **odom**
-* publish_odom (bool): **true**
+* publish_odom_tf (bool): **true**
+* odom_topic_name (string): **odom**
 
 ### Published topics
 
