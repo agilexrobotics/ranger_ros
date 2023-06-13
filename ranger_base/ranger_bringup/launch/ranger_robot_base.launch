@@ -1,0 +1,22 @@
+<?xml version='1.0'?>
+<launch>
+
+    <arg name="port_name" value="can0" />
+    <arg name="simulated_robot" value="false" />
+    <!-- <arg name="model_xacro" default="$(find ranger_description)/urdf/ranger_v2.xacro" /> -->
+    <arg name="odom_topic_name" default="odom_raw" />
+    <arg name="pub_odom_tf" default="false" />
+    <arg name="robot_type" default="$(optenv robot_type ranger)"/>
+
+    <include file="$(find ranger_base)/launch/ranger_mini_base.launch">
+        <arg name="port_name" default="$(arg port_name)" />
+        <arg name="simulated_robot" default="$(arg simulated_robot)" />
+        <arg name="odom_topic_name" default="$(arg odom_topic_name)" />
+        <arg name="robot_type" default="$(arg robot_type)" />
+    </include>
+
+    <!-- <include file="$(find ranger_description)/launch/description.launch">
+        <arg name="model_xacro" default="$(arg model_xacro)" />
+    </include> -->
+
+</launch>
