@@ -1,161 +1,97 @@
 /**
-* @file ranger_messenger.cpp
-* @date 2021-04-20
-* @brief
-*
-# @copyright Copyright (c) 2021 AgileX Robotics
-* @copyright Copyright (c) 2023 Weston Robot Pte. Ltd.
-*/
+ * @Kit       : Qt-Creator: Desktop
+ * @Author    : Wang Zhe
+ * @Date      : 2021-04-20  11:50:26
+ * @FileName  : ranger_messenger.cpp
+ * @Mail      : zhe.wang@agilex.ai
+ * Copyright  : AgileX Robotics (2021)
+ **/
 
 #include "ranger_base/ranger_messenger.hpp"
-
-#include <cmath>
-
-#include <ros/ros.h>
-
 #include <nav_msgs/Odometry.h>
+#include <ros/ros.h>
 #include <tf/transform_broadcaster.h>
-
-#include "ranger_msgs/ActuatorState.h"
-#include "ranger_msgs/DriverState.h"
-#include "ranger_msgs/MotorState.h"
-#include "ranger_msgs/MotionState.h"
-#include "ranger_msgs/SystemState.h"
-
 #include "ranger_base/ranger_params.hpp"
-#include "ranger_base/kinematics_model.hpp"
+#include "ranger_msgs/RangerStatus.h"
+#include "ranger_msgs/RangerBmsStatus.h"
+#include "ranger_msgs/RobotStatus.h"
+#include <tinyxml2.h>
+#include <boost/algorithm/string.hpp>
+
+
 
 using namespace ros;
 using namespace ranger_msgs;
+using namespace std;
+using namespace boost::algorithm;
 
 namespace westonrobot {
-namespace {
-double DegreeToRadian(double x) { return x * M_PI / 180.0; }
-}  // namespace
+RangerROSMessenger::RangerROSMessenger(ros::NodeHandle *nh)
+    : ranger_(nullptr), nh_(nh) {}
 
-///////////////////////////////////////////////////////////////////////////////////
-
-RangerROSMessenger::RangerROSMessenger(ros::NodeHandle* nh) : nh_(nh) {
-  LoadParameters();
-
-  // connect to robot and setup ROS subscription
-  if (robot_type_ == RangerSubType::kRangerMiniV1) {
-    robot_ = std::make_shared<RangerRobot>(true);
-  } else {
-    robot_ = std::make_shared<RangerRobot>(false);
-  }
-
-  if (port_name_.find("can") != std::string::npos) {
-    if (!robot_->Connect(port_name_)) {
-      ROS_ERROR("Failed to connect to the CAN port");
-      ros::shutdown();
-    }
-    robot_->EnableCommandedMode();
-  } else {
-    ROS_ERROR("Invalid port name: %s", port_name_.c_str());
-    ros::shutdown();
-  }
-
-  SetupSubscription();
-}
-
-void RangerROSMessenger::Run() {
-  ros::Rate rate(update_rate_);
-  while (ros::ok()) {
-    PublishStateToROS();
-    ros::spinOnce();
-    rate.sleep();
-  }
-}
-
-void RangerROSMessenger::LoadParameters() {
-  // load parameter from launch files
-  nh_->param<std::string>("port_name", port_name_, std::string("can0"));
-  nh_->param<std::string>("robot_model", robot_model_, std::string("ranger"));
-  nh_->param<std::string>("odom_frame", odom_frame_, std::string("odom"));
-  nh_->param<std::string>("base_frame", base_frame_, std::string("base_link"));
-  nh_->param<int>("update_rate", update_rate_, 50);
-  nh_->param<std::string>("odom_topic_name", odom_topic_name_,
-                          std::string("odom"));
-  nh_->param<bool>("publish_odom_tf", publish_odom_tf_, false);
-
-  ROS_INFO(
-      "Successfully loaded the following parameters: \n port_name: %s\n "
-      "robot_model: %s\n odom_frame: %s\n base_frame: %s\n "
-      "update_rate: %d\n odom_topic_name: %s\n "
-      "publish_odom_tf: %d\n",
-      port_name_.c_str(), robot_model_.c_str(), odom_frame_.c_str(),
-      base_frame_.c_str(), update_rate_, odom_topic_name_.c_str(),
-      publish_odom_tf_);
-
-  // load robot parameters
-  if (robot_model_ == "ranger_mini_v1") {
-    robot_type_ = RangerSubType::kRangerMiniV1;
-
-    robot_params_.track = RangerMiniV1Params::track;
-    robot_params_.wheelbase = RangerMiniV1Params::wheelbase;
-    robot_params_.max_linear_speed = RangerMiniV1Params::max_linear_speed;
-    robot_params_.max_angular_speed = RangerMiniV1Params::max_angular_speed;
-    robot_params_.max_speed_cmd = RangerMiniV1Params::max_speed_cmd;
-    robot_params_.max_steer_angle_central =
-        RangerMiniV1Params::max_steer_angle_central;
-    robot_params_.max_steer_angle_parallel =
-        RangerMiniV1Params::max_steer_angle_parallel;
-    robot_params_.max_round_angle = RangerMiniV1Params::max_round_angle;
-    robot_params_.min_turn_radius = RangerMiniV1Params::min_turn_radius;
-  } else {
-    if (robot_model_ == "ranger_mini_v2") {
-      robot_type_ = RangerSubType::kRangerMiniV2;
-
-      robot_params_.track = RangerMiniV2Params::track;
-      robot_params_.wheelbase = RangerMiniV2Params::wheelbase;
-      robot_params_.max_linear_speed = RangerMiniV2Params::max_linear_speed;
-      robot_params_.max_angular_speed = RangerMiniV2Params::max_angular_speed;
-      robot_params_.max_speed_cmd = RangerMiniV2Params::max_speed_cmd;
-      robot_params_.max_steer_angle_central =
-          RangerMiniV2Params::max_steer_angle_central;
-      robot_params_.max_steer_angle_parallel =
-          RangerMiniV2Params::max_steer_angle_parallel;
-      robot_params_.max_round_angle = RangerMiniV2Params::max_round_angle;
-      robot_params_.min_turn_radius = RangerMiniV2Params::min_turn_radius;
-    } else {
-      robot_type_ = RangerSubType::kRanger;
-
-      robot_params_.track = RangerParams::track;
-      robot_params_.wheelbase = RangerParams::wheelbase;
-      robot_params_.max_linear_speed = RangerParams::max_linear_speed;
-      robot_params_.max_angular_speed = RangerParams::max_angular_speed;
-      robot_params_.max_speed_cmd = RangerParams::max_speed_cmd;
-      robot_params_.max_steer_angle_central =
-          RangerParams::max_steer_angle_central;
-      robot_params_.max_steer_angle_parallel =
-          RangerParams::max_steer_angle_parallel;
-      robot_params_.max_round_angle = RangerParams::max_round_angle;
-      robot_params_.min_turn_radius = RangerParams::min_turn_radius;
-    }
-  }
-}
+RangerROSMessenger::RangerROSMessenger(RangerBase *ranger, ros::NodeHandle *nh)
+    : ranger_(ranger), nh_(nh) {}
 
 void RangerROSMessenger::SetupSubscription() {
-  // publisher
-  system_state_pub_ =
-      nh_->advertise<ranger_msgs::SystemState>("/system_state", 10);
-  motion_state_pub_ =
-      nh_->advertise<ranger_msgs::MotionState>("/motion_state", 10);
-  actuator_state_pub_ =
-      nh_->advertise<ranger_msgs::ActuatorStateArray>("/actuator_state", 10);
-  odom_pub_ = nh_->advertise<nav_msgs::Odometry>(odom_topic_name_, 10);
-  battery_state_pub_ =
-      nh_->advertise<sensor_msgs::BatteryState>("/battery_state", 10);
 
-  // subscriber
-  motion_cmd_sub_ = nh_->subscribe<geometry_msgs::Twist>(
+  std::string robot_type;
+  ros::NodeHandle private_nh("~");
+//  cout << private_nh.getParam("robot_type",robot_type)<<endl;
+  private_nh.param<string>("robot_type",robot_type,"ranger");
+  if(robot_type == "ranger")
+  {
+    ROS_INFO("use ranger param");
+    robot_params.track = RangerParams::track;
+    robot_params.wheelbase = RangerParams::wheelbase;
+    robot_params.max_speed_cmd = RangerParams::max_speed_cmd;
+    robot_params.max_round_angle = RangerParams::max_round_angle;
+    robot_params.min_turn_radius = RangerParams::min_turn_radius;
+    robot_params.max_angular_speed = RangerParams::max_angular_speed;
+    robot_params.max_steer_angle_slide = RangerParams::max_steer_angle_slide;
+    robot_params.max_steer_angle_central = RangerParams::max_steer_angle_central;
+
+
+  }
+  else if(robot_type == "ranger-mini")
+  {
+    ROS_INFO("use ranger-mini param");
+    robot_params.track = RangerMiniParams::track;
+    robot_params.wheelbase = RangerMiniParams::wheelbase;
+    robot_params.max_speed_cmd = RangerMiniParams::max_speed_cmd;
+    robot_params.max_round_angle = RangerMiniParams::max_round_angle;
+    robot_params.min_turn_radius = RangerMiniParams::min_turn_radius;
+    robot_params.max_angular_speed = RangerMiniParams::max_angular_speed;
+    robot_params.max_steer_angle_slide = RangerMiniParams::max_steer_angle_slide;
+    robot_params.max_steer_angle_central = RangerMiniParams::max_steer_angle_central;
+  }
+  odom_publisher_ = nh_->advertise<nav_msgs::Odometry>(odom_topic_name_, 50);
+  status_publisher_ =
+      nh_->advertise<ranger_msgs::RangerStatus>("/ranger_status", 10);
+  bms_publisher_ = nh_->advertise<ranger_msgs::RangerBmsStatus>("/BMS_status",10);
+  robot_status_publisher_ = nh_->advertise<ranger_msgs::RobotStatus>("/robot_status",10);
+
+  motion_cmd_subscriber_ = nh_->subscribe<geometry_msgs::Twist>(
       "/cmd_vel", 5, &RangerROSMessenger::TwistCmdCallback, this);
+  ranger_setting_sub_ = nh_->subscribe<ranger_msgs::RangerSetting>(
+      "/ranger_setting", 1, &RangerROSMessenger::RangerSettingCbk, this);
+
+//  get_version_ser_ = nh_->advertiseService("/get_ranger_version",&RangerROSMessenger::GetVersionCB,this);
+
+  curr_transform_ = Eigen::Matrix4d::Identity();
+//  ranger_->checkVersionRequest();
+//  ROS_INFO(">>");
 }
+
+//bool RangerROSMessenger::GetVersionCB(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
+//{
+//  std::string data = ranger_->checkVersionRequest();
+//  ROS_INFO("%s",data.c_str());
+//  return true;
+//}
 
 void RangerROSMessenger::PublishStateToROS() {
   current_time_ = ros::Time::now();
-
+  double dt = (current_time_ - last_time_).toSec();
   static bool init_run = true;
   if (init_run) {
     last_time_ = current_time_;
@@ -163,203 +99,399 @@ void RangerROSMessenger::PublishStateToROS() {
     return;
   }
 
-  auto state = robot_->GetRobotState();
-  auto actuator_state = robot_->GetActuatorState();
+  auto state = ranger_->GetRobotState();
+  auto motor_state = ranger_->GetMotorState();
+  auto bms_state = ranger_->GetBmsState();
 
-  // update odometry
-  {
-    double dt = (current_time_ - last_time_).toSec();
-    UpdateOdometry(state.motion_state.linear_velocity,
-                   state.motion_state.angular_velocity,
-                   state.motion_state.steering_angle, dt);
-    last_time_ = current_time_;
-  }
+  ROS_DEBUG_NAMED("feedback","Angle_5:%f Angle_6:%f Angle_7:%f Angle_8:%f",
+                  motor_state.motor_angle_state.angle_5,
+                  motor_state.motor_angle_state.angle_6,
+                  motor_state.motor_angle_state.angle_7,
+                  motor_state.motor_angle_state.angle_8);
+  ROS_DEBUG_NAMED("feedback","speed_1:%f speed_2:%f speed_3:%f speed_4:%f",
+                  motor_state.motor_speed_state.speed_1,
+                  motor_state.motor_speed_state.speed_2,
+                  motor_state.motor_speed_state.speed_3,
+                  motor_state.motor_speed_state.speed_4);
 
-  // publish system state
-  {
-    ranger_msgs::SystemState system_msg;
-    system_msg.header.stamp = current_time_;
-    system_msg.vehicle_state = state.system_state.vehicle_state;
-    system_msg.control_mode = state.system_state.control_mode;
-    system_msg.error_code = state.system_state.error_code;
-    system_msg.battery_voltage = state.system_state.battery_voltage;
-    system_msg.motion_mode = state.motion_mode_state.motion_mode;
+  ranger_msgs::RangerStatus status_msg;
+  ranger_msgs::RobotStatus robot_status;
+  status_msg.header.stamp = current_time_;
 
-    system_state_pub_.publish(system_msg);
-  }
+  status_msg.vehicle_state = state.system_state.vehicle_state;
+  status_msg.control_mode = state.system_state.control_mode;
+  status_msg.error_code = state.system_state.error_code;
+  status_msg.battery_voltage = state.system_state.battery_voltage;
+  status_msg.current_motion_mode = state.current_motion_mode.motion_mode;
 
-  // publish motion mode
-  {
-    motion_mode_ = state.motion_mode_state.motion_mode;
+  motion_mode_ = status_msg.current_motion_mode;
 
-    ranger_msgs::MotionState motion_msg;
-    motion_msg.header.stamp = current_time_;
-    motion_msg.motion_mode = state.motion_mode_state.motion_mode;
+  // linear_velocity, angular_velocity, central steering_angle
+  double l_v = 0.0, a_v = 0.0, phi = 0.0,c_v=0.0;
+  // x , y direction linear velocity, motion radius
+  double x_v = 0.0, y_v = 0.0, radius = 0.0;
 
-    motion_state_pub_.publish(motion_msg);
-  }
+  double phi_i = state.motion_state.steering_angle /*/ 180.0 * M_PI*/;
+  ROS_DEBUG_NAMED("feedback","phi_i:%f steering_angle:%f wheel_cpeed:%f\n",phi_i, state.motion_state.steering_angle,state.motion_state.linear_velocity);
+  switch (motion_mode_) {
+    case RangerSetting::MOTION_MODE_ACKERMAN: {
+    double i_v;
+    if(fabs(phi_i) < steer_angle_tolerance)
+    {
+      l_v = state.motion_state.linear_velocity ;
 
-  // publish actuator state
-  {
-    ROS_DEBUG_NAMED("feedback", "Angle_5:%f Angle_6:%f Angle_7:%f Angle_8:%f",
-                    actuator_state.motor_angles.angle_5,
-                    actuator_state.motor_angles.angle_6,
-                    actuator_state.motor_angles.angle_7,
-                    actuator_state.motor_angles.angle_8);
-    ROS_DEBUG_NAMED("feedback", "speed_1:%f speed_2:%f speed_3:%f speed_4:%f",
-                    actuator_state.motor_speeds.speed_1,
-                    actuator_state.motor_speeds.speed_2,
-                    actuator_state.motor_speeds.speed_3,
-                    actuator_state.motor_speeds.speed_4);
-
-    ranger_msgs::ActuatorStateArray actuator_msg;
-    actuator_msg.header.stamp = current_time_;
-    for (int i = 0; i < 8; i++) {
-      ranger_msgs::DriverState driver_state_msg;
-      driver_state_msg.driver_voltage =
-          actuator_state.actuator_ls_state->driver_voltage;
-      driver_state_msg.driver_temperature =
-          actuator_state.actuator_ls_state->driver_temp;
-      driver_state_msg.motor_temperature =
-          actuator_state.actuator_ls_state->motor_temp;
-      driver_state_msg.driver_state =
-          actuator_state.actuator_ls_state->driver_state;
-
-      ranger_msgs::MotorState motor_state_msg;
-      actuator_state.actuator_hs_state->rpm =
-          actuator_state.actuator_hs_state->rpm;
-      actuator_state.actuator_hs_state->current =
-          actuator_state.actuator_hs_state->current;
-      actuator_state.actuator_hs_state->pulse_count =
-          actuator_state.actuator_hs_state->pulse_count;
-
-      ranger_msgs::ActuatorState actuator_state_msg;
-      actuator_state_msg.id = i;
-      actuator_state_msg.driver = driver_state_msg;
-      actuator_state_msg.motor = motor_state_msg;
-
-      actuator_msg.states.push_back(actuator_state_msg);
+      a_v = 0.0;
+      y_v = 0.0;
+      radius = 0.0;
     }
+    else if(phi_i > 0)
+    {
+      i_v= (motor_state.motor_speed_state.speed_3 + motor_state.motor_speed_state.speed_4)/2.0;
+//      c_v = (RangerParams::wheelbase * cos(fabs(phi_i))+RangerParams::track*sin(fabs(phi_i))) * i_v/
+//          RangerParams::wheelbase;
+//      l_v = state.motion_state.linear_velocity;
+//      radius = RangerParams::wheelbase * cos(fabs(phi_i)) / (2.0*sin(fabs(phi_i))) + RangerParams::track / 2.0;
+//      a_v = -(fabs(c_v) / radius);
 
-    actuator_state_pub_.publish(actuator_msg);
+      phi_i = (fabs(motor_state.motor_angle_state.angle_7) + fabs(motor_state.motor_angle_state.angle_8))/2;
+      if(phi_i == 0)
+      {
+        return;
+      }
+//      phi_i = phi_i/180.0*M_PI;
+      double c,r_c,v_c,l,w,k;
+      if(i_v != 0)
+        k = i_v / fabs(i_v);
+      else
+        k = 0;
+      l = robot_params.wheelbase;
+      w =  robot_params.track;
+      a_v = 2*fabs(i_v)*tan(phi_i)/l;  // lunkai
+//      c = atan(l*tan(phi_i)/(w*tan(phi_i)+l));
+      c = atan(l*tan(phi_i)/(l-w*tan(phi_i)));
+      r_c = l/(2*sin(c));
+      v_c = fabs(a_v * r_c) * k;
+
+      l_v = v_c;
+      radius = r_c;
+//      a_v = -a_v;
+      ROS_DEBUG_NAMED("new_formula","phi_i:%f  i_v:%f",phi_i,i_v);
+      ROS_DEBUG_NAMED("new_formula","a_v:%f",-a_v);
+      ROS_DEBUG_NAMED("new_formula","c:%f",c);
+      ROS_DEBUG_NAMED("new_formula","r_c:%f",r_c);
+      ROS_DEBUG_NAMED("new_formula","l_v:%f",v_c);
+      ROS_DEBUG_NAMED("new_formula","\n");
+    }
+    else
+    {
+      ROS_DEBUG_NAMED("aaa","speed_1:%f speed_2:%f",motor_state.motor_speed_state.speed_1,motor_state.motor_speed_state.speed_2);
+      i_v= (motor_state.motor_speed_state.speed_1 + motor_state.motor_speed_state.speed_2)/2.0;
+//      c_v = (RangerParams::wheelbase * cos(fabs(phi_i))+RangerParams::track*sin(fabs(phi_i))) * i_v/RangerParams::wheelbase;
+//      l_v = state.motion_state.linear_velocity;
+//      radius = RangerParams::wheelbase * cos(fabs(phi_i)) / (2.0*sin(fabs(phi_i))) + RangerParams::track / 2.0;
+//      a_v = fabs(c_v) / radius;
+
+      phi_i = (fabs(motor_state.motor_angle_state.angle_5) + fabs(motor_state.motor_angle_state.angle_6))/2;
+//      phi_i = phi_i/180.0*M_PI;
+      double c,r_c,v_c,l,w,k;
+      if(i_v != 0)
+        k = i_v / fabs(i_v);
+      else
+        k = 0;
+      l = robot_params.wheelbase;
+      w =  robot_params.track;
+      a_v = 2*fabs(i_v)*tan(phi_i)/l;//角速度  // lunkai
+//      c = atan(l*tan(phi_i)/(w*tan(phi_i)+l));
+      c = atan(l*tan(phi_i)/(l-w*tan(phi_i)));//中心角
+      r_c = l/(2*sin(c));//中心半径
+      v_c = fabs(a_v * r_c) * k;
+
+
+      l_v = v_c;
+      radius = r_c;
+      a_v = -a_v;
+      ROS_DEBUG_NAMED("new_formula","phi_i:%f  i_v:%f",phi_i,i_v);
+      ROS_DEBUG_NAMED("new_formula","a_v:%f",a_v);
+      ROS_DEBUG_NAMED("new_formula","c:%f",c);
+      ROS_DEBUG_NAMED("new_formula","r_c:%f",r_c);
+      ROS_DEBUG_NAMED("new_formula","l_v:%f",v_c);
+      ROS_DEBUG_NAMED("new_formula","\n");
+    }
+    x_v = l_v;
+    ROS_DEBUG_NAMED("akman_velocity_fb",
+              "liner_v:%f angle_v:%f radius:%f" ,
+              l_v,a_v,radius);
+    break;
+    }
+    case RangerSetting::MOTION_MODE_SLIDE: {
+      l_v = state.motion_state.linear_velocity;
+      phi = phi_i;
+      a_v = 0.0;
+      x_v = l_v * std::cos(phi);
+      y_v = l_v * std::sin(phi);
+      radius = 0.0;
+      break;
+    }
+    case RangerSetting::MOTION_MODE_ROUND: {
+//      double k;
+//      l_v = 0.0;
+//      phi = std::fabs(phi_i);
+//      if(state.motion_state.linear_velocity != 0)
+//        k = state.motion_state.linear_velocity / state.motion_state.linear_velocity;
+//      else
+//        k = 0;
+//      a_v = state.motion_state.linear_velocity / (robot_params.track/(2 * cos(robot_params.max_round_angle)));
+      a_v = state.motion_state.angular_velocity;
+      x_v = 0.0;
+      y_v = 0.0;
+      radius = a_v / state.motion_state.linear_velocity;
+      break;
+    }
+    case RangerSetting::MOTION_MODE_SLOPING: {
+      l_v = -state.motion_state.linear_velocity;
+      phi = std::fabs(phi_i);
+      a_v = 0.0;
+      x_v = 0.0;
+      y_v = l_v;
+      radius = 0.0;
+      break;
+    }
   }
 
-  // publish BMS state
+  //  ROS_WARN("l_v: %f  a_v: %f  phi_i: %f  x_v: %f y_v: %f radius: %f", l_v,
+  //  a_v, phi_i, x_v, y_v, radius);
+
+  status_msg.linear_velocity = l_v;
+  status_msg.angular_velocity = a_v;
+  status_msg.lateral_velocity = 0.0;
+  status_msg.steering_angle = -phi;
+  status_msg.x_linear_vel = x_v;
+  status_msg.y_linear_vel = y_v;
+  status_msg.motion_radius = radius;
+
+  status_publisher_.publish(status_msg);
+
+  if(isnan(l_v) ||
+     isnan(x_v))
   {
-    auto common_sensor_state = robot_->GetCommonSensorState();
-
-    sensor_msgs::BatteryState batt_msg;
-    batt_msg.header.stamp = current_time_;
-    batt_msg.voltage = common_sensor_state.bms_basic_state.voltage;
-    batt_msg.temperature = common_sensor_state.bms_basic_state.temperature;
-    batt_msg.current = common_sensor_state.bms_basic_state.current;
-    batt_msg.percentage = common_sensor_state.bms_basic_state.battery_soc;
-    batt_msg.charge = std::numeric_limits<float>::quiet_NaN();
-    batt_msg.capacity = std::numeric_limits<float>::quiet_NaN();
-    batt_msg.design_capacity = std::numeric_limits<float>::quiet_NaN();
-    batt_msg.power_supply_status =
-        sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
-    batt_msg.power_supply_health =
-        sensor_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN;
-    batt_msg.power_supply_technology =
-        sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_LION;
-    batt_msg.present = std::numeric_limits<uint8_t>::quiet_NaN();
-
-    battery_state_pub_.publish(batt_msg);
+    ROS_WARN("motion_mode:%d",motion_mode_);
+    return;
   }
+
+  PublishOdometryToROS(l_v, a_v, x_v, y_v, dt);
+
+  ranger_msgs::RangerBmsStatus bms_status;
+  bms_status.SOC                = bms_state.bmsbasic.battery_soc;
+  bms_status.SOH                = bms_state.bmsbasic.battery_soh;
+  bms_status.batteryCurrent     = bms_state.bmsbasic.current;
+  bms_status.batteryVoltage     = bms_state.bmsbasic.voltage;
+  bms_status.batteryTemperature = bms_state.bmsbasic.temperature;
+  bms_publisher_.publish(bms_status);
+
+  robot_status.base_state = status_msg.vehicle_state;
+  robot_status.control_mode = status_msg.control_mode;
+  robot_status.fault_code = status_msg.error_code;
+  robot_status.linear_velocity = status_msg.linear_velocity;
+  robot_status.angular_velocity = status_msg.angular_velocity;
+  robot_status_publisher_.publish(robot_status);
+
+//  robot_status.fault_code = status_msg.
+//  cout << bms_status << endl;
+
+  last_time_ = current_time_;
 }
 
-void RangerROSMessenger::UpdateOdometry(double linear, double angular,
-                                        double angle, double dt) {
-  // update odometry calculations
-  if (motion_mode_ == MotionState::MOTION_MODE_DUAL_ACKERMAN) {
-    DualAckermanModel::state_type x = {position_x_, position_y_, theta_};
-    DualAckermanModel::control_type u;
-    u.v = linear;
-    u.phi = ConvertInnerAngleToCentral(angle);
+void RangerROSMessenger::PublishSimStateToROS(double linear, double angular) {}
 
-    boost::numeric::odeint::integrate_const(
-        boost::numeric::odeint::runge_kutta4<DualAckermanModel::state_type>(),
-        DualAckermanModel(robot_params_.wheelbase, u), x, 0.0, dt, (dt / 10.0));
+void RangerROSMessenger::GetCurrentMotionCmdForSim(double &linear,
+                                                   double &angular) {
+  std::lock_guard<std::mutex> lg(twist_mutex_);
+  linear = current_twist_.linear.x;
+  angular = current_twist_.angular.z;
+}
 
-    position_x_ = x[0];
-    position_y_ = x[1];
-    theta_ = x[2];
-  } else if (motion_mode_ == MotionState::MOTION_MODE_PARALLEL ||
-             motion_mode_ == MotionState::MOTION_MODE_SIDE_SLIP) {
-    ParallelModel::state_type x = {position_x_, position_y_, theta_};
-    ParallelModel::control_type u;
-    u.v = linear;
-    if (motion_mode_ == MotionState::MOTION_MODE_SIDE_SLIP) {
-      u.phi = M_PI / 2.0;
-    } else {
-      u.phi = angle;
-    }
-    boost::numeric::odeint::integrate_const(
-        boost::numeric::odeint::runge_kutta4<ParallelModel::state_type>(),
-        ParallelModel(u), x, 0.0, dt, (dt / 10.0));
+void RangerROSMessenger::TwistCmdCallback( const geometry_msgs::Twist::ConstPtr &msg) {
+  double steer_cmd = msg->angular.z;
 
-    position_x_ = x[0];
-    position_y_ = x[1];
-    theta_ = x[2];
-  } else if (motion_mode_ == MotionState::MOTION_MODE_SPINNING) {
-    SpinningModel::state_type x = {position_x_, position_y_, theta_};
-    SpinningModel::control_type u;
-    u.w = angular;
-
-    boost::numeric::odeint::integrate_const(
-        boost::numeric::odeint::runge_kutta4<SpinningModel::state_type>(),
-        SpinningModel(u), x, 0.0, dt, (dt / 10.0));
-
-    position_x_ = x[0];
-    position_y_ = x[1];
-    theta_ = x[2];
+  if (simulated_robot_) {
+    std::lock_guard<std::mutex> lg(twist_mutex_);
+    current_twist_ = *msg.get();
+    return;
   }
 
-  // update odometry topics
+  double radius;
+  steer_cmd = AngelVelocity2Angel(*msg,radius);
+  if(msg->linear.y!=0){ // lunkai
+    motion_mode_ = RangerSetting::MOTION_MODE_SLIDE;
+    ranger_->SetMotionMode(RangerSetting::MOTION_MODE_SLIDE);
+  }
+  else if(radius < robot_params.min_turn_radius && msg->linear.x==0)  // lunkai
+  {
+    motion_mode_ = RangerSetting::MOTION_MODE_ROUND;
+    ranger_->SetMotionMode(RangerSetting::MOTION_MODE_ROUND);
+  }
+  else
+  {
+    motion_mode_ = RangerSetting::MOTION_MODE_ACKERMAN;
+    ranger_->SetMotionMode(RangerSetting::MOTION_MODE_ACKERMAN);
+  }
+  switch (motion_mode_) {
+    case RangerSetting::MOTION_MODE_ACKERMAN: {
+      double radius;
+      steer_cmd = AngelVelocity2Angel(*msg,radius);
+      if (steer_cmd > robot_params.max_steer_angle_central) {
+        steer_cmd = robot_params.max_steer_angle_central;
+      }
+      if (steer_cmd < -robot_params.max_steer_angle_central) {
+        steer_cmd = -robot_params.max_steer_angle_central;
+      }
+
+      double phi_i = steer_cmd;
+      ROS_DEBUG_NAMED("send","phi_i:%f",phi_i);
+//      double phi_degree = -(phi_i / M_PI * 180.0);
+      ROS_DEBUG_NAMED("ranger","l_x:%f a_z:%f",msg->linear.x,msg->angular.z);
+      ranger_->SetMotionCommand(msg->linear.x , phi_i);
+      break;
+    }
+    case RangerSetting::MOTION_MODE_SLIDE: {
+      steer_cmd = -1.0*atan(msg->linear.y/msg->linear.x);  // lunkai
+      //if (steer_cmd > robot_params.max_steer_angle_slide) {
+      //  steer_cmd = robot_params.max_steer_angle_slide;
+      //}
+      //if (steer_cmd < -robot_params.max_steer_angle_slide) {
+      //  steer_cmd = -robot_params.max_steer_angle_slide;
+      //}
+
+      //double phi_degree = -(steer_cmd / M_PI * 180.0);
+
+      double phi_degree = steer_cmd / M_PI * 180.0;
+      if(phi_degree>80){
+        phi_degree = 90;
+      }
+      if(phi_degree<-80){
+        phi_degree = -90;
+      }
+      double vel = msg->linear.x>0?1.0:-1.0;
+      ranger_->SetMotionCommand(vel*sqrt(msg->linear.x*msg->linear.x+msg->linear.y*msg->linear.y), phi_degree);
+      break;
+    }
+    case RangerSetting::MOTION_MODE_ROUND:
+    case RangerSetting::MOTION_MODE_SLOPING: {
+      //ranger_->SetMotionCommand(0.0, 0.0, -(msg->angular.z / 1.68), 0.0);
+
+      float l_v , w,a_v;
+      a_v = msg->angular.z;
+      w = robot_params.track;
+//      l_v = w * a_v /(2*cos(robot_params.max_round_angle));
+//      ROS_INFO("%f",l_v);
+      ranger_->SetMotionCommand(0.0, 0.0, 0.0,a_v);
+      break;
+    }
+  }
+//  ranger_->SetMotionCommand(msg->linear.x, steer_cmd);
+}
+
+void RangerROSMessenger::RangerSettingCbk(
+    const ranger_msgs::RangerSetting::ConstPtr &msg) {
+  ROS_DEBUG_NAMED("variance","ddd");
+  auto mode = msg->motion_mode;
+  motion_mode_ = mode;
+  switch (mode) {
+    case RangerSetting::MOTION_MODE_ACKERMAN: {
+      ranger_->SetMotionMode(RangerSetting::MOTION_MODE_ACKERMAN);
+      break;
+    }
+    case RangerSetting::MOTION_MODE_SLIDE: {
+      ranger_->SetMotionMode(RangerSetting::MOTION_MODE_SLIDE);
+      break;
+    }
+    case RangerSetting::MOTION_MODE_ROUND: {
+      ranger_->SetMotionMode(RangerSetting::MOTION_MODE_ROUND);
+      break;
+    }
+    case RangerSetting::MOTION_MODE_SLOPING: {
+      ranger_->SetMotionMode(RangerSetting::MOTION_MODE_SLOPING);
+      break;
+    }
+    default:
+      ROS_WARN("ranger motion mode not support %d", mode);
+      break;
+  }
+}
+double RangerROSMessenger::ConvertInnerAngleToCentral(double angle) {
+  double phi = 0;
+  double phi_i = angle;
+  if (phi_i > steer_angle_tolerance) {
+    // left turn
+    double r = l / std::tan(phi_i) + w;
+    phi = std::atan(l / r);
+  } else if (phi_i < -steer_angle_tolerance) {
+    // right turn
+    double r = l / std::tan(-phi_i) + w;
+    phi = std::atan(l / r);
+    phi = -phi;
+  }
+    ROS_DEBUG_NAMED("trans","Central:%f",phi);
+  return phi;
+}
+
+double RangerROSMessenger::ConvertCentralAngleToInner(double angle) {
+  double phi = angle;
+  double phi_i = 0;
+  if (phi > steer_angle_tolerance) {
+    // left turn
+    phi_i =
+        std::atan(l * std::sin(phi) / (l * std::cos(phi) - w * std::sin(phi)));
+  } else if (phi < -steer_angle_tolerance) {
+    // right turn
+    phi = -phi;
+    phi_i =
+        std::atan(l * std::sin(phi) / (l * std::cos(phi) - w * std::sin(phi)));
+    phi_i = -phi_i;
+  }
+    ROS_DEBUG_NAMED("trans","Inner:%f",phi_i);
+  return phi_i;
+}
+void RangerROSMessenger::PublishOdometryToROS(double linear, double angle_vel,
+                                              double x_linear_vel,
+                                              double y_linear_vel, double dt) {
+  linear_speed_ = linear;
+  angular_vel_ = angle_vel;
+  x_linear_vel_ = x_linear_vel;
+  y_linear_vel_ = y_linear_vel;
+  double theta = angular_vel_ * dt;
+
+  if(isnan(position_x_) ||
+     isnan(position_y_))
+  {
+    return;
+  }
+
+
+  // update
+  position_x_ +=
+      cos(theta_) * x_linear_vel_ * dt - sin(theta_) * y_linear_vel_ * dt;
+  position_y_ +=
+      sin(theta_) * x_linear_vel_ * dt + cos(theta_) * y_linear_vel_ * dt;
+  theta_ = theta_ + angular_vel_ * dt;
+
+
+
+  if(isnan(position_x_) || isnan(position_y_))
+  {
+    ROS_INFO("%f,%f,%f,%f",linear,angle_vel,x_linear_vel,y_linear_vel);
+  }
+  if (theta_ > M_PI) {
+    theta_ -= 2 * M_PI;
+  } else if (theta_ < -M_PI) {
+    theta_ += 2 * M_PI;
+  }
+  //  printf("theta_ %f,  theta cos angle: %f\n", curr_transform_(0, 0));
+
   geometry_msgs::Quaternion odom_quat = tf::createQuaternionMsgFromYaw(theta_);
 
-  // ROS_INFO("Pose: %f, %f, %f", position_x_, position_y_, theta_ / 3.14 *
-  // 180.0);
-
-  // publish odometry and tf messages
-  nav_msgs::Odometry odom_msg;
-  odom_msg.header.stamp = current_time_;
-  odom_msg.header.frame_id = odom_frame_;
-  odom_msg.child_frame_id = base_frame_;
-
-  odom_msg.pose.pose.position.x = position_x_;
-  odom_msg.pose.pose.position.y = position_y_;
-  odom_msg.pose.pose.position.z = 0.0;
-  odom_msg.pose.pose.orientation = odom_quat;
-
-  if (motion_mode_ == MotionState::MOTION_MODE_DUAL_ACKERMAN) {
-    odom_msg.twist.twist.linear.x = linear * std::cos(theta_);
-    odom_msg.twist.twist.linear.y = linear * std::sin(theta_);
-    odom_msg.twist.twist.angular.z =
-        2 * linear * std::sin(ConvertInnerAngleToCentral(angle)) /
-        robot_params_.wheelbase;
-  } else if (motion_mode_ == MotionState::MOTION_MODE_PARALLEL ||
-             motion_mode_ == MotionState::MOTION_MODE_SIDE_SLIP) {
-    double phi = angle;
-
-    if (motion_mode_ == MotionState::MOTION_MODE_SIDE_SLIP) {
-      phi = M_PI / 2.0;
-    }
-    odom_msg.twist.twist.linear.x = linear * std::cos(phi + theta_);
-    odom_msg.twist.twist.linear.y = linear * std::sin(phi + theta_);
-
-    odom_msg.twist.twist.angular.z = 0;
-  } else if (motion_mode_ == MotionState::MOTION_MODE_SPINNING) {
-    odom_msg.twist.twist.linear.x = 0;
-    odom_msg.twist.twist.linear.y = 0;
-    odom_msg.twist.twist.angular.z = angular;
-  }
-
-  odom_pub_.publish(odom_msg);
-
-  // // publish tf transformation
-  if (publish_odom_tf_) {
+  if (pub_odom_tf_) {
+    // publish tf transformation
     geometry_msgs::TransformStamped tf_msg;
     tf_msg.header.stamp = current_time_;
     tf_msg.header.frame_id = odom_frame_;
@@ -372,128 +504,77 @@ void RangerROSMessenger::UpdateOdometry(double linear, double angular,
 
     tf_broadcaster_.sendTransform(tf_msg);
   }
+  // publish odometry and tf messages
+  nav_msgs::Odometry odom_msg;
+  odom_msg.header.stamp = current_time_;
+  odom_msg.header.frame_id = odom_frame_;
+  odom_msg.child_frame_id = base_frame_;
+
+  odom_msg.pose.pose.position.x = position_x_;
+  odom_msg.pose.pose.position.y = position_y_;
+  odom_msg.pose.pose.position.z = 0.0;
+  odom_msg.pose.pose.orientation = odom_quat;
+
+  odom_msg.twist.twist.linear.x = x_linear_vel_;
+  odom_msg.twist.twist.linear.y = y_linear_vel_;
+  odom_msg.twist.twist.angular.z = angular_vel_;
+
+  //  std::cerr << "linear: " << linear_speed_ << " , angular vel: " <<
+  //  angular_vel_
+  //            << " , pose: (" << position_x_ << "," << position_y_ << ","
+  //            << theta_ << ")" << std::endl;
+
+  odom_publisher_.publish(odom_msg);
 }
 
-void RangerROSMessenger::TwistCmdCallback(
-    const geometry_msgs::Twist::ConstPtr& msg) {
-  double steer_cmd;
-  double radius;
-
-  // analyze Twist msg and switch motion_mode
-  if (msg->linear.y != 0) {
-    if (msg->linear.x == 0.0 && robot_type_ == RangerSubType::kRangerMiniV1) {
-      motion_mode_ = MotionState::MOTION_MODE_SIDE_SLIP;
-      robot_->SetMotionMode(MotionState::MOTION_MODE_SIDE_SLIP);
-    } else {
-      motion_mode_ = MotionState::MOTION_MODE_PARALLEL;
-      robot_->SetMotionMode(MotionState::MOTION_MODE_PARALLEL);
-    }
-  } else {
-    steer_cmd = CalculateSteeringAngle(*msg, radius);
-    if (radius < robot_params_.min_turn_radius) {
-      motion_mode_ = MotionState::MOTION_MODE_SPINNING;
-      robot_->SetMotionMode(MotionState::MOTION_MODE_SPINNING);
-    } else {
-      motion_mode_ = MotionState::MOTION_MODE_DUAL_ACKERMAN;
-      robot_->SetMotionMode(MotionState::MOTION_MODE_DUAL_ACKERMAN);
-    }
-  }
-
-  // send motion command to robot
-  switch (motion_mode_) {
-    case MotionState::MOTION_MODE_DUAL_ACKERMAN: {
-      if (steer_cmd > robot_params_.max_steer_angle_central) {
-        steer_cmd = robot_params_.max_steer_angle_central;
-      }
-      if (steer_cmd < -robot_params_.max_steer_angle_central) {
-        steer_cmd = -robot_params_.max_steer_angle_central;
-      }
-      double phi_i = ConvertInnerAngleToCentral(steer_cmd);
-      robot_->SetMotionCommand(msg->linear.x, phi_i);
-      break;
-    }
-    case MotionState::MOTION_MODE_PARALLEL: {
-      steer_cmd = atan(msg->linear.y / msg->linear.x);
-      if (steer_cmd > robot_params_.max_steer_angle_parallel) {
-        steer_cmd = robot_params_.max_steer_angle_parallel;
-      }
-      if (steer_cmd < -robot_params_.max_steer_angle_parallel) {
-        steer_cmd = -robot_params_.max_steer_angle_parallel;
-      }
-      double vel = msg->linear.x >= 0 ? 1.0 : -1.0;
-      robot_->SetMotionCommand(vel * sqrt(msg->linear.x * msg->linear.x +
-                                          msg->linear.y * msg->linear.y),
-                               steer_cmd);
-      break;
-    }
-    case MotionState::MOTION_MODE_SPINNING: {
-      double a_v = msg->angular.z;
-      if (a_v > robot_params_.max_angular_speed) {
-        a_v = robot_params_.max_angular_speed;
-      }
-      if (a_v < -robot_params_.max_angular_speed) {
-        a_v = -robot_params_.max_angular_speed;
-      }
-      robot_->SetMotionCommand(0.0, 0.0, a_v);
-      break;
-    }
-    case MotionState::MOTION_MODE_SIDE_SLIP: {
-      double l_v = msg->linear.y;
-      if (l_v > robot_params_.max_linear_speed) {
-        l_v = robot_params_.max_linear_speed;
-      }
-      if (l_v < -robot_params_.max_linear_speed) {
-        l_v = -robot_params_.max_linear_speed;
-      }
-      robot_->SetMotionCommand(0.0, 0.0, l_v);
-      break;
-    }
-  }
-}
-
-double RangerROSMessenger::CalculateSteeringAngle(geometry_msgs::Twist msg,
-                                                  double& radius) {
+double RangerROSMessenger::AngelVelocity2Angel(geometry_msgs::Twist msg,double &radius)
+{
   double linear = fabs(msg.linear.x);
   double angular = fabs(msg.angular.z);
-  if (angular == 0) {
-    radius = robot_params_.min_turn_radius;
+  if(angular == 0)
+  {
+    radius = robot_params.min_turn_radius;
     return 0.0;
   }
 
   radius = linear / angular;
-  int k =
-      msg.angular.z / fabs(msg.angular.z) * msg.linear.x / fabs(msg.linear.x);
-  if ((2 * radius - robot_params_.track) < 0) {
-    return k * robot_params_.max_steer_angle_central;
+  //if(linear!=0 && radius<=robot_params.min_turn_radius){
+  //  std::cout<<"error!"<<std::endl;
+  //  std::cout<<"radius:"<<radius<<std::endl;
+  //  std::cout<<"robot_params.min_turn_radius:"<<robot_params.min_turn_radius<<std::endl;
+  //  std::cout<<"---------------"<<std::endl;
+  //}
+  
+  int k = msg.angular.z / fabs(msg.angular.z);
+  if ((2*radius-robot_params.track)<0 )
+  {
+    return  k*robot_params.max_steer_angle_central;
   }
 
-  double l, w, phi_i, x;
-  l = robot_params_.wheelbase;
-  w = robot_params_.track;
-  x = sqrt(radius * radius + (l / 2) * (l / 2));
-  phi_i = atan((l / 2) / (x - w / 2));
-  return k * phi_i;
+  double l,w,phi_i,x;
+  l = robot_params.wheelbase;
+  w = robot_params.track;
+  x = sqrt(radius*radius + (l/2)*(l/2));
+  phi_i = asin(l/x/2);  // lunkai
+  if(msg.linear.x<0)
+    phi_i *= -1.0;
+  return k*phi_i;
+  /******/
+//  double phi_c,phi_i;
+//  phi_c = asin(RangerParams::wheelbase*angular/(2*linear));
+//  phi_i = atan(RangerParams::wheelbase*angular/(2*linear*cos(phi_c)-RangerParams::track*angular));
+//  return k*phi_i;
+//  ROS_DEBUG_NAMED("new_formula_send","phi_i:%f\n",phi_i);
+  /******/
+
+//  return k*std::atan(RangerParams::wheelbase / (2*radius-RangerParams::track));
 }
 
-double RangerROSMessenger::ConvertInnerAngleToCentral(double angle) {
-  double phi = 0;
-  double phi_i = angle;
-
-  phi = std::atan(robot_params_.wheelbase * std::sin(phi_i) /
-                  (robot_params_.wheelbase * std::cos(phi_i) -
-                   robot_params_.track * std::sin(phi_i)));
-
-  return phi;
+double RangerROSMessenger::Deg2Rad(double x)
+{
+  return x*M_PI/180.0;
 }
 
-double RangerROSMessenger::ConvertCentralAngleToInner(double angle) {
-  double phi = angle;
-  double phi_i = 0;
-
-  phi_i = std::atan(robot_params_.wheelbase * std::sin(phi) /
-                    (robot_params_.wheelbase * std::cos(phi) +
-                     robot_params_.track * std::sin(phi)));
-
-  return phi_i;
-}
 }  // namespace westonrobot
+
+

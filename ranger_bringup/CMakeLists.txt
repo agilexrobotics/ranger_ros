@@ -1,31 +1,20 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(ranger_base)
+project(ranger_bringup)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+# add_compile_options(-std=c++11)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  controller_manager
-  geometry_msgs
-  ranger_msgs
   roscpp
-  roslaunch
-  sensor_msgs
-  topic_tools
-  ugv_sdk
-  tf2
-  tf2_ros
-  nav_msgs
-#  async_port
+  rospy
 )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-find_package(Eigen3 REQUIRED)
-include_directories(${EIGEN3_INCLUDE_DIR})
+
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -80,7 +69,7 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 ## Generate added messages and services with any dependencies listed here
 # generate_messages(
 #   DEPENDENCIES
-#   geometry_msgs#   ranger_msgs#   sensor_msgs
+#   std_msgs  # Or other packages containing msgs
 # )
 
 ################################################
@@ -113,9 +102,9 @@ include_directories(${EIGEN3_INCLUDE_DIR})
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  INCLUDE_DIRS include
-#  LIBRARIES ranger_base
-#  CATKIN_DEPENDS controller_manager geometry_msgs ranger_msgs roscpp roslaunch sensor_msgs topic_tools ugv_sdk
+#  INCLUDE_DIRS include
+#  LIBRARIES ranger_bringup
+#  CATKIN_DEPENDS roscpp rospy
 #  DEPENDS system_lib
 )
 
@@ -126,23 +115,24 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-  include
+# include
   ${catkin_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIR}
 )
 
-add_library(ascent INTERFACE)
-target_include_directories(ascent INTERFACE
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-	$<INSTALL_INTERFACE:include>)
+## Declare a C++ library
+# add_library(${PROJECT_NAME}
+#   src/${PROJECT_NAME}/ranger_bringup.cpp
+# )
 
-add_library(ranger_messenger STATIC src/ranger_messenger.cpp src/ranger_model.cpp)
-target_link_libraries(ranger_messenger ${catkin_LIBRARIES} ascent)
-add_dependencies(ranger_messenger ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+## Add cmake target dependencies of the library
+## as an example, code may need to be generated before libraries
+## either from message generation or dynamic reconfigure
+# add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_executable(ranger_base_node src/ranger_base_node.cpp)
-target_link_libraries(ranger_base_node ranger_messenger ascent ${catkin_LIBRARIES})
-
+## Declare a C++ executable
+## With catkin_make all packages are built within a single CMake context
+## The recommended prefix ensures that target names across packages don't collide
+# add_executable(${PROJECT_NAME}_node src/ranger_bringup_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -188,11 +178,11 @@ target_link_libraries(ranger_base_node ranger_messenger ascent ${catkin_LIBRARIE
 # )
 
 ## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+install(DIRECTORY scripts launch
+    DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 #   FILES_MATCHING PATTERN "*.h"
-#   PATTERN ".svn" EXCLUDE
-# )
+  PATTERN ".svn" EXCLUDE
+)
 
 ## Mark other files for installation (e.g. launch and bag files, etc.)
 # install(FILES
@@ -206,7 +196,7 @@ target_link_libraries(ranger_base_node ranger_messenger ascent ${catkin_LIBRARIE
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_ranger_base.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_ranger_bringup.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
