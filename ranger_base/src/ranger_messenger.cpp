@@ -480,7 +480,7 @@ double RangerROSMessenger::ConvertInnerAngleToCentral(double angle) {
   double phi_i = angle;
 
   phi = std::atan(robot_params_.wheelbase * std::sin(phi_i) /
-                  (robot_params_.wheelbase * std::cos(phi_i) -
+                  (robot_params_.wheelbase * std::cos(phi_i) +
                    robot_params_.track * std::sin(phi_i)));
 
   return phi;
