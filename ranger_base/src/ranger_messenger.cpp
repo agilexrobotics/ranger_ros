@@ -390,6 +390,7 @@ void RangerROSMessenger::TwistCmdCallback(
     }
   } else {
     steer_cmd = CalculateSteeringAngle(*msg, radius);
+    // Use minimum turn radius to switch between dual ackerman and spinning mode
     if (radius < robot_params_.min_turn_radius) {
       motion_mode_ = MotionState::MOTION_MODE_SPINNING;
       robot_->SetMotionMode(MotionState::MOTION_MODE_SPINNING);
@@ -408,7 +409,7 @@ void RangerROSMessenger::TwistCmdCallback(
       if (steer_cmd < -robot_params_.max_steer_angle_central) {
         steer_cmd = -robot_params_.max_steer_angle_central;
       }
-      double phi_i = ConvertInnerAngleToCentral(steer_cmd);
+      double phi_i = ConvertCentralAngleToInner(steer_cmd);
       robot_->SetMotionCommand(msg->linear.x, phi_i);
       break;
     }
@@ -453,19 +454,12 @@ void RangerROSMessenger::TwistCmdCallback(
 
 double RangerROSMessenger::CalculateSteeringAngle(geometry_msgs::Twist msg,
                                                   double& radius) {
-  double linear = fabs(msg.linear.x);
-  double angular = fabs(msg.angular.z);
-  if (angular == 0) {
-    radius = robot_params_.min_turn_radius;
-    return 0.0;
-  }
+  double linear = std::abs(msg.linear.x);
+  double angular = std::abs(msg.angular.z);
 
+  // Circular motion
   radius = linear / angular;
-  int k =
-      msg.angular.z / fabs(msg.angular.z) * msg.linear.x / fabs(msg.linear.x);
-  if ((2 * radius - robot_params_.track) < 0) {
-    return k * robot_params_.max_steer_angle_central;
-  }
+  int k = (msg.angular.z * msg.linear.x) >= 0 ? 1.0 : -1.0;
 
   double l, w, phi_i, x;
   l = robot_params_.wheelbase;
@@ -477,23 +471,24 @@ double RangerROSMessenger::CalculateSteeringAngle(geometry_msgs::Twist msg,
 
 double RangerROSMessenger::ConvertInnerAngleToCentral(double angle) {
   double phi = 0;
-  double phi_i = angle;
+  double phi_i = std::abs(angle);
 
   phi = std::atan(robot_params_.wheelbase * std::sin(phi_i) /
                   (robot_params_.wheelbase * std::cos(phi_i) +
                    robot_params_.track * std::sin(phi_i)));
 
+  phi *= angle >= 0 ? 1.0 : -1.0;
   return phi;
 }
 
 double RangerROSMessenger::ConvertCentralAngleToInner(double angle) {
-  double phi = angle;
+  double phi = std::abs(angle);
   double phi_i = 0;
 
   phi_i = std::atan(robot_params_.wheelbase * std::sin(phi) /
-                    (robot_params_.wheelbase * std::cos(phi) +
+                    (robot_params_.wheelbase * std::cos(phi) -
                      robot_params_.track * std::sin(phi)));
-
+  phi_i *= angle >= 0 ? 1.0 : -1.0;
   return phi_i;
 }
 }  // namespace westonrobot
