@@ -1,9 +1,10 @@
 <?xml version="1.0" ?>
 <robot name="ranger_mini_2" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+<!--<xacro:include filename="$(find ranger_mini_2_description)/urdf/ranger_mini_2.gazebo" />-->
+<!--<xacro:include filename="$(find ranger_mini_2_description)/urdf/ranger_mini_2.trans" />-->
 <xacro:include filename="$(find ranger_mini_2_description)/urdf/materials.xacro" />
-<xacro:include filename="$(find ranger_mini_2_description)/urdf/ranger_mini_2.trans" />
-<xacro:include filename="$(find ranger_mini_2_description)/urdf/ranger_mini_2.gazebo" />
+
 <link name="base_link">
    </link>
 <link name="chassis">
