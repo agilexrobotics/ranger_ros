@@ -1,28 +1,28 @@
 <?xml version="1.0" ?>
-<robot name="ranger_mini_2" xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot name="ranger_mini_v2" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
 
-<xacro:include filename="$(find ranger_mini_2_description)/urdf/materials.xacro" />
+<xacro:include filename="$(find ranger_mini_v2_description)/urdf/materials.xacro" />
 
 <link name="base_link">
    </link>
 <link name="chassis">
   <inertial>
     <origin xyz="0.0001301218949058549 0.0030074171790468902 -0.07771770524025037" rpy="0 0 0"/>
-    <mass value="350.5091145217733"/>
+    <mass value="40"/>
     <inertia ixx="8.040674" iyy="11.001664" izz="16.477499" ixy="0.002035" iyz="0.031274" ixz="-0.00191"/>
   </inertial>
   <visual>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="package://ranger_mini_v2_description/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="silver"/>
   </visual>
   <collision>
     <origin xyz="0 0 0" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="package://ranger_mini_v2_description/meshes/base_link.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -30,20 +30,20 @@
 <link name="Wheel_Mount_RR_1">
   <inertial>
     <origin xyz="0.011628658549576482 0.059269501818553144 -0.06389070858469212" rpy="0 0 0"/>
-    <mass value="1.9553744352555158"/>
+    <mass value="2"/>
     <inertia ixx="0.00712" iyy="0.00691" izz="0.002887" ixy="-6.4e-05" iyz="0.001379" ixz="-0.000771"/>
   </inertial>
   <visual>
     <origin xyz="0.247 0.182 0.091" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/Wheel_Mount_RR_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="package://ranger_mini_v2_description/meshes/Wheel_Mount_RR_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="silver"/>
   </visual>
   <collision>
     <origin xyz="0.247 0.182 0.091" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/Wheel_Mount_RR_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="package://ranger_mini_v2_description/meshes/Wheel_Mount_RR_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -51,20 +51,20 @@
 <link name="Wheel_Mount_FR_1">
   <inertial>
     <origin xyz="-0.014905320677810724 0.05851441689641934 -0.06347964851224003" rpy="0 0 0"/>
-    <mass value="1.94356253335655"/>
+    <mass value="2"/>
     <inertia ixx="0.007054" iyy="0.00685" izz="0.002873" ixy="7.6e-05" iyz="0.001412" ixz="0.000675"/>
   </inertial>
   <visual>
     <origin xyz="-0.247 0.182 0.091" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/Wheel_Mount_FR_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="package://ranger_mini_v2_description/meshes/Wheel_Mount_FR_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="silver"/>
   </visual>
   <collision>
     <origin xyz="-0.247 0.182 0.091" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/Wheel_Mount_FR_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="package://ranger_mini_v2_description/meshes/Wheel_Mount_FR_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -72,20 +72,20 @@
 <link name="Wheel_Mount_FL_1">
   <inertial>
     <origin xyz="-0.014285037495889663 -0.058685926018411355 -0.06389071226538415" rpy="0 0 0"/>
-    <mass value="1.9553747187854946"/>
+    <mass value="2"/>
     <inertia ixx="0.007114" iyy="0.006916" izz="0.002887" ixy="-7.3e-05" iyz="-0.001413" ixz="0.000708"/>
   </inertial>
   <visual>
     <origin xyz="-0.247 -0.182 0.091" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/Wheel_Mount_FL_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="package://ranger_mini_v2_description/meshes/Wheel_Mount_FL_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="silver"/>
   </visual>
   <collision>
     <origin xyz="-0.247 -0.182 0.091" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/Wheel_Mount_FL_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="package://ranger_mini_v2_description/meshes/Wheel_Mount_FL_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -93,20 +93,20 @@
 <link name="Wheel_Mount_RL_1">
   <inertial>
     <origin xyz="0.01459572217140026 -0.05859241247404259 -0.06347963516781976" rpy="0 0 0"/>
-    <mass value="1.9435628681699386"/>
+    <mass value="2"/>
     <inertia ixx="0.007055" iyy="0.006849" izz="0.002873" ixy="7.4e-05" iyz="-0.001408" ixz="-0.000682"/>
   </inertial>
   <visual>
     <origin xyz="0.247 -0.182 0.091" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/Wheel_Mount_RL_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="package://ranger_mini_v2_description/meshes/Wheel_Mount_RL_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="silver"/>
   </visual>
   <collision>
     <origin xyz="0.247 -0.182 0.091" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/Wheel_Mount_RL_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="package://ranger_mini_v2_description/meshes/Wheel_Mount_RL_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -114,20 +114,20 @@
 <link name="Wheel_RR_1">
   <inertial>
     <origin xyz="0.0022430242710007597 -0.054632702776337555 -2.2843641336867115e-07" rpy="0 0 0"/>
-    <mass value="17.88788321658866"/>
+    <mass value="1"/>
     <inertia ixx="0.050003" iyy="0.082096" izz="0.049949" ixy="-0.001318" iyz="0.0" ixz="0.0"/>
   </inertial>
   <visual>
     <origin xyz="0.247194 0.129964 0.220803" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/Wheel_RR_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="package://ranger_mini_v2_description/meshes/Wheel_RR_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="silver"/>
   </visual>
   <collision>
     <origin xyz="0.247194 0.129964 0.220803" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/Wheel_RR_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="package://ranger_mini_v2_description/meshes/Wheel_RR_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -135,20 +135,20 @@
 <link name="Wheel_RL_1">
   <inertial>
     <origin xyz="-0.0003777198364899592 0.05467700696785935 5.175895449738288e-07" rpy="0 0 0"/>
-    <mass value="17.887706008016806"/>
+    <mass value="1"/>
     <inertia ixx="0.04995" iyy="0.082147" izz="0.049948" ixy="-0.000224" iyz="0.0" ixz="0.0"/>
   </inertial>
   <visual>
     <origin xyz="0.2447 -0.130015 0.220803" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/Wheel_RL_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="package://ranger_mini_v2_description/meshes/Wheel_RL_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="silver"/>
   </visual>
   <collision>
     <origin xyz="0.2447 -0.130015 0.220803" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/Wheel_RL_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="package://ranger_mini_v2_description/meshes/Wheel_RL_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -156,20 +156,20 @@
 <link name="Wheel_FL_1">
   <inertial>
     <origin xyz="0.00021917294506040852 0.054678454913226704 3.0412799473245045e-07" rpy="0 0 0"/>
-    <mass value="17.88770315589428"/>
+    <mass value="1"/>
     <inertia ixx="0.049949" iyy="0.082148" izz="0.049948" ixy="0.000131" iyz="0.0" ixz="0.0"/>
   </inertial>
   <visual>
     <origin xyz="-0.244851 -0.130008 0.220803" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/Wheel_FL_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="package://ranger_mini_v2_description/meshes/Wheel_FL_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="silver"/>
   </visual>
   <collision>
     <origin xyz="-0.244851 -0.130008 0.220803" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/Wheel_FL_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="package://ranger_mini_v2_description/meshes/Wheel_FL_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
 </link>
@@ -177,20 +177,21 @@
 <link name="Wheel_FR_1">
   <inertial>
     <origin xyz="0.0006659634965649752 -0.05467500916626114 7.648109502655931e-07" rpy="0 0 0"/>
-    <mass value="17.887888570386863"/>
+    <mass value="1"/>
     <inertia ixx="0.049954" iyy="0.082145" izz="0.049949" ixy="-0.000394" iyz="-0.0" ixz="0.0"/>
   </inertial>
   <visual>
     <origin xyz="-0.244426 0.130027 0.220803" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/Wheel_FR_1.stl" scale="0.001 0.001 0.001"/>
+      <mesh filename="package://ranger_mini_v2_description/meshes/Wheel_FR_1.stl" scale="0.001 0.001 0.001"/>
     </geometry>
     <material name="silver"/>
   </visual>
   <collision>
     <origin xyz="-0.244426 0.130027 0.220803" rpy="0 0 0"/>
     <geometry>
-      <mesh filename="package://ranger_mini_2_description/meshes/Wheel_FR_1.stl" scale="0.001 0.001 0.001"/>
+    <!--<cylinder length="0.1" radius="0.1" />-->
+      <mesh filename="package://ranger_mini_v2_description/meshes/Wheel_FR_1.stl" scale="0.001 0.001 0.001"/> 
     </geometry>
   </collision>
 </link>

@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<robot name="ranger_mini_2" xmlns:xacro="http://www.ros.org/wiki/xacro" >
+<robot name="ranger_mini_v2" xmlns:xacro="http://www.ros.org/wiki/xacro" >
 
 <material name="silver">
   <color rgba="0.700 0.700 0.700 1.000"/>

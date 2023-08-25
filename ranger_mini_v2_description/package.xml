@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>ranger_mini_2_description</name>
+  <name>ranger_mini_v2_description</name>
   <version>0.0.0</version>
-<description>The ranger_mini_2_description package</description>
+<description>The ranger_mini_v2_description package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

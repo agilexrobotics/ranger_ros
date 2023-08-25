@@ -1,7 +1,7 @@
 <launch>
-  <arg name="model" default="$(find ranger_mini_2_description)/urdf/ranger_mini_2.xacro"/>
+  <arg name="model" default="$(find ranger_mini_v2_description)/urdf/ranger_mini_v2.xacro"/>
   <arg name="gui" default="true"/>
-  <arg name="rvizconfig" default="$(find ranger_mini_2_description)/launch/urdf.rviz"/>
+  <arg name="rvizconfig" default="$(find ranger_mini_v2_description)/launch/urdf.rviz"/>
   <param name="robot_description" command="$(find xacro)/xacro $(arg model)"/>
   <param name="use_gui" value="$(arg gui)"/>
   <node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui"/>
