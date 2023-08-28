@@ -23,7 +23,7 @@ $ sudo apt install libasio-dev libboost-all-dev
 
 2. Clone and build the packages in a catkin workspace
 
-```
+```bash
 $ cd ~/catkin_ws/src
 $ git clone https://github.com/westonrobot/ugv_sdk.git
 $ git clone https://github.com/agilexrobotics/ranger_ros.git
@@ -39,12 +39,12 @@ $ catkin_make
     
 * first time use scout-ros package
    ```
-   $ rosrun scout_bringup setup_can2usb.bash
+   $ rosrun ranger_bringup setup_can2usb.bash
    ```
    
 * if not the first time use scout-ros package(Run this command every time you turn off the power) 
    ```
-   $ rosrun scout_bringup bringup_can2usb.bash
+   $ rosrun ranger_bringup bringup_can2usb.bash
    ```
    
 * Testing command
@@ -58,19 +58,19 @@ $ catkin_make
 * Start the base node for ranger
 
     ```shell
-    $ roslaunch ranger_base ranger.launch #for ranger
+    $ roslaunch ranger_bringup ranger.launch #for ranger
     ```
 
 * Start the base node for ranger_mini_v1
 
     ```shell
-    $ roslaunch ranger_base ranger_mini_v1.launch #for ranger_mini 1.0
+    $ roslaunch ranger_bringup ranger_mini_v1.launch #for ranger_mini 1.0
     ```
 
 * Start the base node for ranger_mini_v2
 
     ```bash
-    $ roslaunch ranger_base ranger_mini_v2.launch #for ranger_mini 2.0
+    $ roslaunch ranger_bringup ranger_mini_v2.launch #for ranger_mini 2.0
     ```
 
 
