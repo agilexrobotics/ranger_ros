@@ -27,6 +27,7 @@
 #include <ranger_msgs/SystemState.h>
 #include <ranger_msgs/MotionState.h>
 #include <ranger_msgs/ActuatorStateArray.h>
+#include <ranger_msgs/RangerLightCmd.h>
 
 #include "ranger_base/ranger_params.hpp"
 #include "ugv_sdk/mobile_robot/ranger_robot.hpp"
@@ -60,6 +61,7 @@ class RangerROSMessenger {
   void PublishStateToROS();
   void PublishSimStateToROS(double linear, double angular);
   void TwistCmdCallback(const geometry_msgs::Twist::ConstPtr& msg);
+  void LightCmdCallback(const ranger_msgs::RangerLightCmd::ConstPtr &msg);
   double CalculateSteeringAngle(geometry_msgs::Twist msg, double& radius);
   void UpdateOdometry(double linear, double angular, double angle, double dt);
   double ConvertInnerAngleToCentral(double angle);
@@ -91,6 +93,7 @@ class RangerROSMessenger {
   ros::Publisher battery_state_pub_;
 
   ros::Subscriber motion_cmd_sub_;
+  ros::Subscriber light_cmd_subscriber_;
 
   tf2_ros::TransformBroadcaster tf_broadcaster_;
 

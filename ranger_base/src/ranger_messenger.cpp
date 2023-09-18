@@ -151,6 +151,9 @@ void RangerROSMessenger::SetupSubscription() {
   // subscriber
   motion_cmd_sub_ = nh_->subscribe<geometry_msgs::Twist>(
       "/cmd_vel", 5, &RangerROSMessenger::TwistCmdCallback, this);
+  light_cmd_subscriber_ = nh_->subscribe<ranger_msgs::RangerLightCmd>(
+      "/ranger_light_control", 5, &RangerROSMessenger::LightCmdCallback, this);
+
 }
 
 void RangerROSMessenger::PublishStateToROS() {
@@ -450,6 +453,34 @@ void RangerROSMessenger::TwistCmdCallback(
       break;
     }
   }
+}
+
+void RangerROSMessenger::LightCmdCallback(
+    const ranger_msgs::RangerLightCmd::ConstPtr &msg)
+{
+    if (msg->enable_cmd_light_control)
+    {
+      LightCommandMessage cmd;
+
+      switch (msg->front_mode)
+      {
+        case ranger_msgs::RangerLightCmd::LIGHT_CONST_OFF:
+        {
+          cmd.front_light.mode = CONST_OFF;
+          break;
+        }
+        case ranger_msgs::RangerLightCmd::LIGHT_CONST_ON:
+        {
+          cmd.front_light.mode = CONST_ON;
+          break;
+        }
+      }
+      robot_->SetLightCommand(cmd.front_light.mode,0,cmd.front_light.mode,0);
+    }
+    else
+    {
+      robot_->DisableLightControl();
+    }
 }
 
 double RangerROSMessenger::CalculateSteeringAngle(geometry_msgs::Twist msg,
