@@ -28,6 +28,7 @@
 #include <ranger_msgs/MotionState.h>
 #include <ranger_msgs/ActuatorStateArray.h>
 #include <ranger_msgs/RangerLightCmd.h>
+#include <ranger_msgs/TriggerParkMode.h>
 
 #include "ranger_base/ranger_params.hpp"
 #include "ugv_sdk/mobile_robot/ranger_robot.hpp"
@@ -67,6 +68,7 @@ class RangerROSMessenger {
   void UpdateOdometry(double linear, double angular, double angle, double dt);
   double ConvertInnerAngleToCentral(double angle);
   double ConvertCentralAngleToInner(double angle);
+  bool TriggerParkingService(ranger_msgs::TriggerParkMode::Request &req, ranger_msgs::TriggerParkMode::Response &res); 
 
   ros::NodeHandle* nh_;
   std::shared_ptr<RangerRobot> robot_;
@@ -95,6 +97,9 @@ class RangerROSMessenger {
 
   ros::Subscriber motion_cmd_sub_;
   ros::Subscriber light_cmd_subscriber_;
+
+  ros::ServiceServer trigger_parking_server;
+  ros::ServiceClient trigger_parking_client;
 
   tf2_ros::TransformBroadcaster tf_broadcaster_;
 
