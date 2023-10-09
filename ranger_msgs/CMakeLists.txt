@@ -32,6 +32,7 @@ add_message_files(
   MotionState.msg
   MotorState.msg
   SystemState.msg
+  RangerLightCmd.msg
 )
 
 ## Generate services in the 'srv' folder
