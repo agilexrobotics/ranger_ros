@@ -337,8 +337,8 @@ void RangerROSMessenger::UpdateOdometry(double linear, double angular,
   odom_msg.pose.pose.orientation = odom_quat;
 
   if (motion_mode_ == MotionState::MOTION_MODE_DUAL_ACKERMAN) {
-    odom_msg.twist.twist.linear.x = linear * std::cos(theta_);
-    odom_msg.twist.twist.linear.y = linear * std::sin(theta_);
+    odom_msg.twist.twist.linear.x = linear;
+    odom_msg.twist.twist.linear.y = 0.0;
     odom_msg.twist.twist.angular.z =
         2 * linear * std::sin(ConvertInnerAngleToCentral(angle)) /
         robot_params_.wheelbase;
@@ -349,8 +349,8 @@ void RangerROSMessenger::UpdateOdometry(double linear, double angular,
     if (motion_mode_ == MotionState::MOTION_MODE_SIDE_SLIP) {
       phi = M_PI / 2.0;
     }
-    odom_msg.twist.twist.linear.x = linear * std::cos(phi + theta_);
-    odom_msg.twist.twist.linear.y = linear * std::sin(phi + theta_);
+    odom_msg.twist.twist.linear.x = linear * std::cos(phi);
+    odom_msg.twist.twist.linear.y = linear * std::sin(phi);
 
     odom_msg.twist.twist.angular.z = 0;
   } else if (motion_mode_ == MotionState::MOTION_MODE_SPINNING) {
