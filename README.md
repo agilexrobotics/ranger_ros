@@ -25,7 +25,7 @@ $ sudo apt install libasio-dev libboost-all-dev
 
 ```bash
 $ cd ~/catkin_ws/src
-$ git clone https://github.com/westonrobot/ugv_sdk.git
+$ git clone https://github.com/agilexrobotics/ugv_sdk.git
 $ git clone https://github.com/agilexrobotics/ranger_ros.git
 $ cd ..
 $ catkin_make
