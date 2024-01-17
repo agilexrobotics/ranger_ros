@@ -98,8 +98,8 @@ void RangerROSMessenger::LoadParameters() {
     robot_params_.max_linear_speed = RangerMiniV1Params::max_linear_speed;
     robot_params_.max_angular_speed = RangerMiniV1Params::max_angular_speed;
     robot_params_.max_speed_cmd = RangerMiniV1Params::max_speed_cmd;
-    robot_params_.max_steer_angle_central =
-        RangerMiniV1Params::max_steer_angle_central;
+    robot_params_.max_steer_angle_ackermann =
+        RangerMiniV1Params::max_steer_angle_ackermann;
     robot_params_.max_steer_angle_parallel =
         RangerMiniV1Params::max_steer_angle_parallel;
     robot_params_.max_round_angle = RangerMiniV1Params::max_round_angle;
@@ -113,8 +113,8 @@ void RangerROSMessenger::LoadParameters() {
       robot_params_.max_linear_speed = RangerMiniV2Params::max_linear_speed;
       robot_params_.max_angular_speed = RangerMiniV2Params::max_angular_speed;
       robot_params_.max_speed_cmd = RangerMiniV2Params::max_speed_cmd;
-      robot_params_.max_steer_angle_central =
-          RangerMiniV2Params::max_steer_angle_central;
+      robot_params_.max_steer_angle_ackermann =
+          RangerMiniV2Params::max_steer_angle_ackermann;
       robot_params_.max_steer_angle_parallel =
           RangerMiniV2Params::max_steer_angle_parallel;
       robot_params_.max_round_angle = RangerMiniV2Params::max_round_angle;
@@ -127,8 +127,8 @@ void RangerROSMessenger::LoadParameters() {
       robot_params_.max_linear_speed = RangerParams::max_linear_speed;
       robot_params_.max_angular_speed = RangerParams::max_angular_speed;
       robot_params_.max_speed_cmd = RangerParams::max_speed_cmd;
-      robot_params_.max_steer_angle_central =
-          RangerParams::max_steer_angle_central;
+      robot_params_.max_steer_angle_ackermann =
+          RangerParams::max_steer_angle_ackermann;
       robot_params_.max_steer_angle_parallel =
           RangerParams::max_steer_angle_parallel;
       robot_params_.max_round_angle = RangerParams::max_round_angle;
@@ -285,11 +285,11 @@ void RangerROSMessenger::UpdateOdometry(double linear, double angular,
     DualAckermanModel::state_type x = {position_x_, position_y_, theta_};
     DualAckermanModel::control_type u;
     u.v = linear;
-    u.phi = ConvertInnerAngleToCentral(angle);
+    u.phi = angle;
 
     boost::numeric::odeint::integrate_const(
         boost::numeric::odeint::runge_kutta4<DualAckermanModel::state_type>(),
-        DualAckermanModel(robot_params_.wheelbase, u), x, 0.0, dt, (dt / 10.0));
+        DualAckermanModel(robot_params_.wheelbase, robot_params_.track, u), x, 0.0, dt, (dt / 10.0));
 
     position_x_ = x[0];
     position_y_ = x[1];
@@ -346,8 +346,7 @@ void RangerROSMessenger::UpdateOdometry(double linear, double angular,
     odom_msg.twist.twist.linear.x = linear;
     odom_msg.twist.twist.linear.y = 0.0;
     odom_msg.twist.twist.angular.z =
-        2 * linear * std::sin(ConvertInnerAngleToCentral(angle)) /
-        robot_params_.wheelbase;
+        2 * linear / (robot_params_.wheelbase / std::tan(angle) + robot_params_.track);
   } else if (motion_mode_ == MotionState::MOTION_MODE_PARALLEL ||
              motion_mode_ == MotionState::MOTION_MODE_SIDE_SLIP) {
     double phi = angle;
@@ -415,14 +414,13 @@ void RangerROSMessenger::TwistCmdCallback(
   // send motion command to robot
   switch (motion_mode_) {
     case MotionState::MOTION_MODE_DUAL_ACKERMAN: {
-      if (steer_cmd > robot_params_.max_steer_angle_central) {
-        steer_cmd = robot_params_.max_steer_angle_central;
+      if (steer_cmd > robot_params_.max_steer_angle_ackermann) {
+        steer_cmd = robot_params_.max_steer_angle_ackermann;
       }
-      if (steer_cmd < -robot_params_.max_steer_angle_central) {
-        steer_cmd = -robot_params_.max_steer_angle_central;
+      if (steer_cmd < -robot_params_.max_steer_angle_ackermann) {
+        steer_cmd = -robot_params_.max_steer_angle_ackermann;
       }
-      double phi_i = ConvertCentralAngleToInner(steer_cmd);
-      robot_->SetMotionCommand(msg->linear.x, phi_i);
+      robot_->SetMotionCommand(msg->linear.x, steer_cmd);
       break;
     }
     case MotionState::MOTION_MODE_PARALLEL: {

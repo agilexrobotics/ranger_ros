@@ -43,7 +43,7 @@ class RangerROSMessenger {
     double max_linear_speed;
     double max_angular_speed;
     double max_speed_cmd;
-    double max_steer_angle_central;
+    double max_steer_angle_ackermann;
     double max_steer_angle_parallel;
     double max_round_angle;
     double min_turn_radius;
