@@ -506,29 +506,6 @@ double RangerROSMessenger::CalculateSteeringAngle(geometry_msgs::Twist msg,
   return k * phi_i;
 }
 
-double RangerROSMessenger::ConvertInnerAngleToCentral(double angle) {
-  double phi = 0;
-  double phi_i = std::abs(angle);
-
-  phi = std::atan(robot_params_.wheelbase * std::sin(phi_i) /
-                  (robot_params_.wheelbase * std::cos(phi_i) +
-                   robot_params_.track * std::sin(phi_i)));
-
-  phi *= angle >= 0 ? 1.0 : -1.0;
-  return phi;
-}
-
-double RangerROSMessenger::ConvertCentralAngleToInner(double angle) {
-  double phi = std::abs(angle);
-  double phi_i = 0;
-
-  phi_i = std::atan(robot_params_.wheelbase * std::sin(phi) /
-                    (robot_params_.wheelbase * std::cos(phi) -
-                     robot_params_.track * std::sin(phi)));
-  phi_i *= angle >= 0 ? 1.0 : -1.0;
-  return phi_i;
-}
-
 bool RangerROSMessenger::TriggerParkingService(
     ranger_msgs::TriggerParkMode::Request& req,
     ranger_msgs::TriggerParkMode::Response& res) {
