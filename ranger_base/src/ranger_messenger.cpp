@@ -161,9 +161,6 @@ void RangerROSMessenger::SetupSubscription() {
 
   // service server
   trigger_parking_server = nh_->advertiseService("parking_service", &RangerROSMessenger::TriggerParkingService, this);
-
-  // service client
-  trigger_parking_client = nh_->serviceClient<ranger_msgs::TriggerParkMode>("parking_service");
 }
 
 void RangerROSMessenger::PublishStateToROS() {
