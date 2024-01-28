@@ -47,7 +47,6 @@ class RangerROSMessenger {
     double max_steer_angle_parallel;
     double max_round_angle;
     double min_turn_radius;
-    bool parking_mode;
   };
 
   enum class RangerSubType { kRanger = 0, kRangerMiniV1, kRangerMiniV2 };
@@ -88,6 +87,7 @@ class RangerROSMessenger {
   bool publish_odom_tf_;
 
   uint8_t motion_mode_ = 0;
+  bool parking_mode_;
 
   ros::Publisher system_state_pub_;
   ros::Publisher motion_state_pub_;

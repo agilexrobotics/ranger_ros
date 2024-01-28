@@ -104,7 +104,6 @@ void RangerROSMessenger::LoadParameters() {
         RangerMiniV1Params::max_steer_angle_parallel;
     robot_params_.max_round_angle = RangerMiniV1Params::max_round_angle;
     robot_params_.min_turn_radius = RangerMiniV1Params::min_turn_radius;
-    robot_params_.parking_mode = RangerMiniV1Params::parking_mode;
   } else {
     if (robot_model_ == "ranger_mini_v2") {
       robot_type_ = RangerSubType::kRangerMiniV2;
@@ -120,7 +119,6 @@ void RangerROSMessenger::LoadParameters() {
           RangerMiniV2Params::max_steer_angle_parallel;
       robot_params_.max_round_angle = RangerMiniV2Params::max_round_angle;
       robot_params_.min_turn_radius = RangerMiniV2Params::min_turn_radius;
-      robot_params_.parking_mode = RangerMiniV2Params::parking_mode;
     } else {
       robot_type_ = RangerSubType::kRanger;
 
@@ -135,9 +133,9 @@ void RangerROSMessenger::LoadParameters() {
           RangerParams::max_steer_angle_parallel;
       robot_params_.max_round_angle = RangerParams::max_round_angle;
       robot_params_.min_turn_radius = RangerParams::min_turn_radius;
-      robot_params_.parking_mode = RangerParams::parking_mode;
     }
   }
+  parking_mode_ = false;
 }
 
 void RangerROSMessenger::SetupSubscription() {
@@ -391,7 +389,7 @@ void RangerROSMessenger::TwistCmdCallback(
 
   // analyze Twist msg and switch motion_mode
   // check for parking mode, only applicable to RangerMiniV2
-  if (robot_params_.parking_mode && robot_type_ == RangerSubType::kRangerMiniV2) {
+  if (parking_mode_ && robot_type_ == RangerSubType::kRangerMiniV2) {
     return;
   }
   else if (msg->linear.y != 0) {
@@ -546,7 +544,7 @@ bool RangerROSMessenger::TriggerParkingService(ranger_msgs::TriggerParkMode::Req
     res.isParked = false;
     robot_->SetMotionMode(MotionState::MOTION_MODE_DUAL_ACKERMAN);
   }
-  robot_params_.parking_mode = res.isParked;
+  parking_mode_ = res.isParked;
   return res.response;
 }
 }  // namespace westonrobot
