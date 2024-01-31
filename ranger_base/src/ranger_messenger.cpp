@@ -532,17 +532,24 @@ double RangerROSMessenger::ConvertCentralAngleToInner(double angle) {
   return phi_i;
 }
 
-bool RangerROSMessenger::TriggerParkingService(ranger_msgs::TriggerParkMode::Request &req, 
-                                               ranger_msgs::TriggerParkMode::Response &res) {
-  // Call to trigger park mode                                             
+bool RangerROSMessenger::TriggerParkingService(
+    ranger_msgs::TriggerParkMode::Request& req,
+    ranger_msgs::TriggerParkMode::Response& res) {
+  // Call to trigger park mode
   if (req.TriggerParkedMode) {
     res.response = true;
     res.isParked = true;
+    robot_->SetMotionCommand(0.0,
+                             0.0);  // This functions needs to be invoked before
+                                    // the parking mode can be triggered
     robot_->SetMotionMode(MotionState::MOTION_MODE_PARKING);
-  } else { // Call to release park mode
+  } else {  // Call to release park mode
     res.response = true;
     res.isParked = false;
     robot_->SetMotionMode(MotionState::MOTION_MODE_DUAL_ACKERMAN);
+    robot_->SetMotionCommand(
+        0.0, 0.0);  // Setting the mode to dual Ackerman doesn't return the
+                    // wheels to its original position, hence this function.
   }
   parking_mode_ = res.isParked;
   return res.response;
