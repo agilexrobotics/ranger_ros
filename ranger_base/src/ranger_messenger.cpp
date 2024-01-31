@@ -279,13 +279,13 @@ void RangerROSMessenger::PublishStateToROS() {
 }
 
 void RangerROSMessenger::UpdateOdometry(double linear, double angular,
-                                        double angle, double dt) {
+                                        double steering_angle, double dt) {
   // update odometry calculations
   if (motion_mode_ == MotionState::MOTION_MODE_DUAL_ACKERMAN) {
     DualAckermanModel::state_type x = {position_x_, position_y_, theta_};
     DualAckermanModel::control_type u;
     u.v = linear;
-    u.phi = angle;
+    u.phi = steering_angle;
 
     boost::numeric::odeint::integrate_const(
         boost::numeric::odeint::runge_kutta4<DualAckermanModel::state_type>(),
@@ -302,7 +302,7 @@ void RangerROSMessenger::UpdateOdometry(double linear, double angular,
     if (motion_mode_ == MotionState::MOTION_MODE_SIDE_SLIP) {
       u.phi = M_PI / 2.0;
     } else {
-      u.phi = angle;
+      u.phi = steering_angle;
     }
     boost::numeric::odeint::integrate_const(
         boost::numeric::odeint::runge_kutta4<ParallelModel::state_type>(),
@@ -345,11 +345,17 @@ void RangerROSMessenger::UpdateOdometry(double linear, double angular,
   if (motion_mode_ == MotionState::MOTION_MODE_DUAL_ACKERMAN) {
     odom_msg.twist.twist.linear.x = linear;
     odom_msg.twist.twist.linear.y = 0.0;
-    odom_msg.twist.twist.angular.z =
-        2 * linear / (robot_params_.wheelbase / std::tan(angle) + robot_params_.track);
+    if (steering_angle == 0) {
+      odom_msg.twist.twist.angular.z = 0;
+    } else {
+      odom_msg.twist.twist.angular.z =
+          (steering_angle / std::abs(steering_angle)) * 2 * linear /
+          (robot_params_.wheelbase / std::abs(std::tan(steering_angle)) +
+           robot_params_.track);
+    }
   } else if (motion_mode_ == MotionState::MOTION_MODE_PARALLEL ||
              motion_mode_ == MotionState::MOTION_MODE_SIDE_SLIP) {
-    double phi = angle;
+    double phi = steering_angle;
 
     if (motion_mode_ == MotionState::MOTION_MODE_SIDE_SLIP) {
       phi = M_PI / 2.0;
@@ -503,6 +509,7 @@ double RangerROSMessenger::CalculateSteeringAngle(geometry_msgs::Twist msg,
   l = robot_params_.wheelbase;
   w = robot_params_.track;
   phi_i = atan((l / 2) / (radius - w / 2));
+  ROS_INFO("command linear: %f, angular: %f", linear, phi_i);
   return k * phi_i;
 }
 
