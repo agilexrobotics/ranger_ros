@@ -537,14 +537,12 @@ bool RangerROSMessenger::TriggerParkingService(
     ranger_msgs::TriggerParkMode::Response& res) {
   // Call to trigger park mode
   if (req.TriggerParkedMode) {
-    res.response = true;
     res.isParked = true;
     robot_->SetMotionCommand(0.0,
                              0.0);  // This functions needs to be invoked before
                                     // the parking mode can be triggered
     robot_->SetMotionMode(MotionState::MOTION_MODE_PARKING);
   } else {  // Call to release park mode
-    res.response = true;
     res.isParked = false;
     robot_->SetMotionMode(MotionState::MOTION_MODE_DUAL_ACKERMAN);
     robot_->SetMotionCommand(
@@ -552,6 +550,6 @@ bool RangerROSMessenger::TriggerParkingService(
                     // wheels to its original position, hence this function.
   }
   parking_mode_ = res.isParked;
-  return res.response;
+  return true;
 }
 }  // namespace westonrobot
