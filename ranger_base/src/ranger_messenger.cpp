@@ -158,7 +158,8 @@ void RangerROSMessenger::SetupSubscription() {
 
 
   // service server
-  trigger_parking_server = nh_->advertiseService("parking_service", &RangerROSMessenger::TriggerParkingService, this);
+  trigger_parking_server = nh_->advertiseService(
+      "parking_service", &RangerROSMessenger::TriggerParkingService, this);
 }
 
 void RangerROSMessenger::PublishStateToROS() {
@@ -391,8 +392,7 @@ void RangerROSMessenger::TwistCmdCallback(
   // check for parking mode, only applicable to RangerMiniV2
   if (parking_mode_ && robot_type_ == RangerSubType::kRangerMiniV2) {
     return;
-  }
-  else if (msg->linear.y != 0) {
+  } else if (msg->linear.y != 0) {
     if (msg->linear.x == 0.0 && robot_type_ == RangerSubType::kRangerMiniV1) {
       motion_mode_ = MotionState::MOTION_MODE_SIDE_SLIP;
       robot_->SetMotionMode(MotionState::MOTION_MODE_SIDE_SLIP);
