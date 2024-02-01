@@ -22,13 +22,13 @@
 
 #include <geometry_msgs/Twist.h>
 #include <nav_msgs/Odometry.h>
-#include <sensor_msgs/BatteryState.h>
 
 #include <ranger_msgs/SystemState.h>
 #include <ranger_msgs/MotionState.h>
 #include <ranger_msgs/ActuatorStateArray.h>
 #include <ranger_msgs/RangerLightCmd.h>
 #include <ranger_msgs/TriggerParkMode.h>
+#include <ranger_msgs/BatteryState.h>
 
 #include "ranger_base/ranger_params.hpp"
 #include "ugv_sdk/mobile_robot/ranger_robot.hpp"

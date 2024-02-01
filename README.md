@@ -92,7 +92,7 @@ $ catkin_make
 * /motion_state (ranger_msgs::MotionState)
 * /actuator_state (ranger_msgs::ActuatorStateArray)
 * /odom (nav_msgs::Odometry)
-* /battery_state (sensor_msgs::BatteryState)
+* /battery_state (ranger_msgs::BatteryState)
 
 ### Subscribed topics
 

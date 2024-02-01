@@ -148,7 +148,7 @@ void RangerROSMessenger::SetupSubscription() {
       nh_->advertise<ranger_msgs::ActuatorStateArray>("/actuator_state", 10);
   odom_pub_ = nh_->advertise<nav_msgs::Odometry>(odom_topic_name_, 10);
   battery_state_pub_ =
-      nh_->advertise<sensor_msgs::BatteryState>("/battery_state", 10);
+      nh_->advertise<ranger_msgs::BatteryState>("/battery_state", 10);
 
   // subscriber
   motion_cmd_sub_ = nh_->subscribe<geometry_msgs::Twist>(
@@ -257,7 +257,7 @@ void RangerROSMessenger::PublishStateToROS() {
   {
     auto common_sensor_state = robot_->GetCommonSensorState();
 
-    sensor_msgs::BatteryState batt_msg;
+    ranger_msgs::BatteryState batt_msg;
     batt_msg.header.stamp = current_time_;
     batt_msg.voltage = common_sensor_state.bms_basic_state.voltage;
     batt_msg.temperature = common_sensor_state.bms_basic_state.temperature;
@@ -267,11 +267,11 @@ void RangerROSMessenger::PublishStateToROS() {
     batt_msg.capacity = std::numeric_limits<float>::quiet_NaN();
     batt_msg.design_capacity = std::numeric_limits<float>::quiet_NaN();
     batt_msg.power_supply_status =
-        sensor_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
+        ranger_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
     batt_msg.power_supply_health =
-        sensor_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN;
+        ranger_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN;
     batt_msg.power_supply_technology =
-        sensor_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_LION;
+        ranger_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_LION;
     batt_msg.present = std::numeric_limits<uint8_t>::quiet_NaN();
 
     battery_state_pub_.publish(batt_msg);
