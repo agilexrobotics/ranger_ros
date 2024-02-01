@@ -289,7 +289,8 @@ void RangerROSMessenger::UpdateOdometry(double linear, double angular,
 
     boost::numeric::odeint::integrate_const(
         boost::numeric::odeint::runge_kutta4<DualAckermanModel::state_type>(),
-        DualAckermanModel(robot_params_.wheelbase, robot_params_.track, u), x, 0.0, dt, (dt / 10.0));
+        DualAckermanModel(robot_params_.wheelbase, robot_params_.track, u), x,
+        0.0, dt, (dt / 10.0));
 
     position_x_ = x[0];
     position_y_ = x[1];
