@@ -19,6 +19,7 @@ This repository contains ROS support packages for the Ranger robot bases to prov
 
 ```bash
 $ sudo apt install libasio-dev libboost-all-dev
+$ sudo apt install -y ros-$ROS_DISTRO-teleop-twist-keyboard
 ```
 
 2. Clone and build the packages in a catkin workspace
@@ -71,6 +72,10 @@ $ catkin_make
 
     ```bash
     $ roslaunch ranger_bringup ranger_mini_v2.launch #for ranger_mini 2.0
+    ```
+* Use keyboard to control ranger
+    ```bash
+    $ rosrun teleop_twist_keyboard teleop_twist_keyboard.py
     ```
 
 
