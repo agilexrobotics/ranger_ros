@@ -22,6 +22,7 @@
 #include "ranger_msgs/MotionState.h"
 #include "ranger_msgs/SystemState.h"
 #include "ranger_msgs/TriggerParkMode.h"
+#include "ranger_msgs/RsStatus.h"
 
 #include "ranger_base/ranger_params.hpp"
 #include "ranger_base/kinematics_model.hpp"
@@ -149,6 +150,8 @@ void RangerROSMessenger::SetupSubscription() {
   odom_pub_ = nh_->advertise<nav_msgs::Odometry>(odom_topic_name_, 10);
   battery_state_pub_ =
       nh_->advertise<ranger_msgs::BatteryState>("/battery_state", 10);
+  rs_state_pub_ =
+      nh_->advertise<ranger_msgs::RsStatus>("rs_state",10);
 
   // subscriber
   motion_cmd_sub_ = nh_->subscribe<geometry_msgs::Twist>(
@@ -195,6 +198,24 @@ void RangerROSMessenger::PublishStateToROS() {
     system_msg.motion_mode = state.motion_mode_state.motion_mode;
 
     system_state_pub_.publish(system_msg);
+  }
+
+  {
+    ranger_msgs::RsStatus rs_status_msgs;
+    rs_status_msgs.header.stamp = current_time_;
+    rs_status_msgs.stick_left_h =   state.rc_state.stick_left_h;
+    rs_status_msgs.stick_left_v =   state.rc_state.stick_left_v;
+    rs_status_msgs.stick_right_h =   state.rc_state.stick_right_h;
+    rs_status_msgs.stick_right_v =   state.rc_state.stick_right_v;
+
+    rs_status_msgs.swa = state.rc_state.swa;
+    rs_status_msgs.swb = state.rc_state.swb;
+    rs_status_msgs.swc = state.rc_state.swc;
+    rs_status_msgs.swd = state.rc_state.swd;
+
+    rs_status_msgs.var_a = state.rc_state.var_a;
+
+    rs_state_pub_.publish(rs_status_msgs);
   }
 
   // publish motion mode

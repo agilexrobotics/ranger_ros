@@ -94,6 +94,7 @@ class RangerROSMessenger {
   ros::Publisher actuator_state_pub_;
   ros::Publisher odom_pub_;
   ros::Publisher battery_state_pub_;
+  ros::Publisher rs_state_pub_;
 
   ros::Subscriber motion_cmd_sub_;
   ros::Subscriber light_cmd_subscriber_;

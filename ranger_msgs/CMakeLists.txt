@@ -34,6 +34,7 @@ add_message_files(
   SystemState.msg
   RangerLightCmd.msg
   BatteryState.msg
+  RsStatus.msg
 )
 
 # Generate services in the 'srv' folder
