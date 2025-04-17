@@ -49,7 +49,7 @@ class RangerROSMessenger {
     double min_turn_radius;
   };
 
-  enum class RangerSubType { kRanger = 0, kRangerMiniV1, kRangerMiniV2 };
+  enum class RangerSubType { kRanger = 0, kRangerMiniV1, kRangerMiniV2, kRangerMiniV3 };
 
  public:
   RangerROSMessenger(ros::NodeHandle* nh);
