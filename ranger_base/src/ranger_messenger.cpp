@@ -564,4 +564,5 @@ bool RangerROSMessenger::TriggerParkingService(
   parking_mode_ = res.isParked;
   return true;
 }
+
 }  // namespace westonrobot

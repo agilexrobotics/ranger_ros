@@ -69,6 +69,8 @@ class RangerROSMessenger {
   double ConvertCentralAngleToInner(double angle);
   bool TriggerParkingService(ranger_msgs::TriggerParkMode::Request &req, ranger_msgs::TriggerParkMode::Response &res); 
 
+  // ranger_msgs::RsStatus CheckRsMsg(const ranger_msgs::RsStatus &msg);
+
   ros::NodeHandle* nh_;
   std::shared_ptr<RangerRobot> robot_;
   RangerSubType robot_type_;

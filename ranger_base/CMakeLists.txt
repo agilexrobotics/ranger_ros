@@ -131,17 +131,17 @@ include_directories(
   ${EIGEN3_INCLUDE_DIR}
 )
 
-add_library(ascent INTERFACE)
-target_include_directories(ascent INTERFACE
+add_library(ranger_ascent INTERFACE)
+target_include_directories(ranger_ascent INTERFACE
 	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
 	$<INSTALL_INTERFACE:include>)
 
 add_library(ranger_messenger STATIC src/ranger_messenger.cpp)
-target_link_libraries(ranger_messenger ${catkin_LIBRARIES} ascent)
+target_link_libraries(ranger_messenger ${catkin_LIBRARIES} ranger_ascent)
 add_dependencies(ranger_messenger ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 add_executable(ranger_base_node src/ranger_base_node.cpp)
-target_link_libraries(ranger_base_node ranger_messenger ascent ${catkin_LIBRARIES})
+target_link_libraries(ranger_base_node ranger_messenger ranger_ascent ${catkin_LIBRARIES})
 
 
 ## Rename C++ executable without prefix
