@@ -23,6 +23,7 @@
 #include "ranger_msgs/SystemState.h"
 #include "ranger_msgs/TriggerParkMode.h"
 #include "ranger_msgs/RsStatus.h"
+#include "ranger_msgs/RangerBmsStatus.h"
 
 #include "ranger_base/ranger_params.hpp"
 #include "ranger_base/kinematics_model.hpp"
@@ -40,11 +41,17 @@ double DegreeToRadian(double x) { return x * M_PI / 180.0; }
 RangerROSMessenger::RangerROSMessenger(ros::NodeHandle* nh) : nh_(nh) {
   LoadParameters();
 
+
+
   // connect to robot and setup ROS subscription
   if (robot_type_ == RangerSubType::kRangerMiniV1) {
-    robot_ = std::make_shared<RangerRobot>(true);
+    robot_ = std::make_shared<RangerRobot>(RangerRobot::Variant::kRangerMiniV1);
+  } else if (robot_type_ == RangerSubType::kRangerMiniV2) {
+    robot_ = std::make_shared<RangerRobot>(RangerRobot::Variant::kRangerMiniV2);
+  } else if (robot_type_ == RangerSubType::kRangerMiniV3) {
+    robot_ = std::make_shared<RangerRobot>(RangerRobot::Variant::kRangerMiniV3);
   } else {
-    robot_ = std::make_shared<RangerRobot>(false);
+    robot_ = std::make_shared<RangerRobot>(RangerRobot::Variant::kRanger);
   }
 
   if (port_name_.find("can") != std::string::npos) {
@@ -275,28 +282,42 @@ void RangerROSMessenger::PublishStateToROS() {
   }
 
   // publish BMS state
+
   {
-    auto common_sensor_state = robot_->GetCommonSensorState();
-
-    ranger_msgs::BatteryState batt_msg;
-    batt_msg.header.stamp = current_time_;
-    batt_msg.voltage = common_sensor_state.bms_basic_state.voltage;
-    batt_msg.temperature = common_sensor_state.bms_basic_state.temperature;
-    batt_msg.current = common_sensor_state.bms_basic_state.current;
-    batt_msg.percentage = common_sensor_state.bms_basic_state.battery_soc;
-    batt_msg.charge = std::numeric_limits<float>::quiet_NaN();
-    batt_msg.capacity = std::numeric_limits<float>::quiet_NaN();
-    batt_msg.design_capacity = std::numeric_limits<float>::quiet_NaN();
-    batt_msg.power_supply_status =
-        ranger_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
-    batt_msg.power_supply_health =
-        ranger_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN;
-    batt_msg.power_supply_technology =
-        ranger_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_LION;
-    batt_msg.present = std::numeric_limits<uint8_t>::quiet_NaN();
-
-    battery_state_pub_.publish(batt_msg);
+    auto bms_state = robot_->GetCommonSensorState();
+    ranger_msgs::RangerBmsStatus batt_msg;
+    batt_msg.SOC = bms_state.bms_basic_state.battery_soc;
+    batt_msg.SOH = bms_state.bms_basic_state.battery_soh;
+    batt_msg.battery_voltage = bms_state.bms_basic_state.voltage;
+    batt_msg.battery_current = bms_state.bms_basic_state.current;
+    batt_msg.battery_temperature = bms_state.bms_basic_state.temperature;
+    batt_msg.Alarm_Status_1 = bms_state.bms_extended_state.alarm_status_1;
+    batt_msg.Alarm_Status_2 = bms_state.bms_extended_state.alarm_status_2;
+    batt_msg.Warning_Status_1 = bms_state.bms_extended_state.warn_status_1;
+    batt_msg.Warning_Status_2 = bms_state.bms_extended_state.warn_status_2;
   }
+  // {
+  //   auto common_sensor_state = robot_->GetCommonSensorState();
+
+  //   ranger_msgs::BatteryState batt_msg;
+  //   batt_msg.header.stamp = current_time_;
+  //   batt_msg.voltage = common_sensor_state.bms_basic_state.voltage;
+  //   batt_msg.temperature = common_sensor_state.bms_basic_state.temperature;
+  //   batt_msg.current = common_sensor_state.bms_basic_state.current;
+  //   batt_msg.percentage = common_sensor_state.bms_basic_state.battery_soc;
+  //   batt_msg.charge = std::numeric_limits<float>::quiet_NaN();
+  //   batt_msg.capacity = std::numeric_limits<float>::quiet_NaN();
+  //   batt_msg.design_capacity = std::numeric_limits<float>::quiet_NaN();
+  //   batt_msg.power_supply_status =
+  //       ranger_msgs::BatteryState::POWER_SUPPLY_STATUS_UNKNOWN;
+  //   batt_msg.power_supply_health =
+  //       ranger_msgs::BatteryState::POWER_SUPPLY_HEALTH_UNKNOWN;
+  //   batt_msg.power_supply_technology =
+  //       ranger_msgs::BatteryState::POWER_SUPPLY_TECHNOLOGY_LION;
+  //   batt_msg.present = std::numeric_limits<uint8_t>::quiet_NaN();
+
+  //   battery_state_pub_.publish(batt_msg);
+  // }
 }
 
 void RangerROSMessenger::UpdateOdometry(double linear, double angular,
