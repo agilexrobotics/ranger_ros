@@ -269,12 +269,6 @@ void RangerROSMessenger::PublishStateToROS() {
           actuator_state.actuator_hs_state->current;
       motor_state_msg.pulse_count =
           actuator_state.actuator_hs_state->pulse_count;
-      motor_state_msg.motor_angles = 
-          actuator_state.motor_angles.angle_5;
-      motor_state_msg.motor_speeds = 
-          actuator_state.motor_speeds.speed_1;
-
-
       ranger_msgs::ActuatorState actuator_state_msg;
       actuator_state_msg.id = i;
       actuator_state_msg.driver = driver_state_msg;
@@ -282,6 +276,16 @@ void RangerROSMessenger::PublishStateToROS() {
 
       actuator_msg.states.push_back(actuator_state_msg);
     }
+
+    actuator_msg.states[0].motor.motor_angles = actuator_state.motor_angles.angle_5;
+    actuator_msg.states[1].motor.motor_angles = actuator_state.motor_angles.angle_6;
+    actuator_msg.states[2].motor.motor_angles = actuator_state.motor_angles.angle_7;
+    actuator_msg.states[3].motor.motor_angles = actuator_state.motor_angles.angle_8;
+
+    actuator_msg.states[0].motor.motor_speeds = actuator_state.motor_speeds.speed_1;
+    actuator_msg.states[1].motor.motor_speeds = actuator_state.motor_speeds.speed_2;
+    actuator_msg.states[2].motor.motor_speeds = actuator_state.motor_speeds.speed_3;
+    actuator_msg.states[3].motor.motor_speeds = actuator_state.motor_speeds.speed_4;
 
     actuator_state_pub_.publish(actuator_msg);
   }
