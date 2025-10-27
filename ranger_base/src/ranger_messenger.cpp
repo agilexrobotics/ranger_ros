@@ -483,13 +483,16 @@ void RangerROSMessenger::TwistCmdCallback(
     }
     case MotionState::MOTION_MODE_PARALLEL: {
       steer_cmd = atan(msg->linear.y / msg->linear.x);
-      if (std::signbit(msg->linear.x)&&msg->linear.x == 0.0)
+
+      static double last_nonzero_x = 1.0; 
+      
+      if (msg->linear.x != 0.0) {
+          last_nonzero_x = msg->linear.x; 
+      }
+
+      if (std::signbit(msg->linear.x))
       {
         steer_cmd = -steer_cmd;
-      }
-      else
-      {
-        steer_cmd = steer_cmd;
       }
       
       if (steer_cmd > robot_params_.max_steer_angle_parallel) {
@@ -498,7 +501,20 @@ void RangerROSMessenger::TwistCmdCallback(
       if (steer_cmd < -robot_params_.max_steer_angle_parallel) {
         steer_cmd = -robot_params_.max_steer_angle_parallel;
       }
-      double vel = msg->linear.x >= 0 ? 1.0 : -1.0;
+      double vel = 1.0;
+      
+      if (msg->linear.x == 0.0 && msg->linear.y != 0.0) {
+          // std::cout << "MOTION_MODE_SIDE_SLIP" << std::endl;
+          
+          if (std::signbit(last_nonzero_x)) {
+              steer_cmd = -std::abs(steer_cmd); 
+          } else {
+              steer_cmd = std::abs(steer_cmd);
+          }
+          vel = msg->linear.y >= 0 ? 1.0 : -1.0;
+      } else {
+          vel = msg->linear.x >= 0 ? 1.0 : -1.0;
+      }
       robot_->SetMotionCommand(vel * sqrt(msg->linear.x * msg->linear.x +
                                           msg->linear.y * msg->linear.y),
                                steer_cmd);
