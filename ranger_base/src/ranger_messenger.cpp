@@ -156,7 +156,7 @@ void RangerROSMessenger::SetupSubscription() {
       nh_->advertise<ranger_msgs::ActuatorStateArray>("/actuator_state", 10);
   odom_pub_ = nh_->advertise<nav_msgs::Odometry>(odom_topic_name_, 10);
   battery_state_pub_ =
-      nh_->advertise<ranger_msgs::BatteryState>("/battery_state", 10);
+      nh_->advertise<ranger_msgs::RangerBmsStatus>("/battery_state", 10);
   rs_state_pub_ =
       nh_->advertise<ranger_msgs::RsStatus>("rs_state",10);
 
@@ -304,6 +304,7 @@ void RangerROSMessenger::PublishStateToROS() {
     batt_msg.Alarm_Status_2 = bms_state.bms_extended_state.alarm_status_2;
     batt_msg.Warning_Status_1 = bms_state.bms_extended_state.warn_status_1;
     batt_msg.Warning_Status_2 = bms_state.bms_extended_state.warn_status_2;
+    battery_state_pub_.publish(batt_msg);
   }
   // {
   //   auto common_sensor_state = robot_->GetCommonSensorState();
