@@ -1,17 +1,15 @@
 # ROS Packages for Ranger Robot
 
-This repository contains ROS support packages for the Ranger robot bases to provide a ROS interface to the robot.
+This repository contains ROS support packages for the Ranger Air and Ranger Delta to provide a ROS interface to the robot.
 
 ## Supported hardware
 
-* Ranger Mini V1.0
-<img src="./docs/ranger_mini_v1.png" width="350" />
+* Ranger Delta
+<img src="./img/ranger_air.png" width="500" />
 
-* Ranger Mini V2.0 and V3.0
-<img src="./docs/ranger_mini_v2.png" width="350" />
+* Ranger Mini Air
+<img src="./img/ranger_delta.png" width="350" />
 
-* Ranger
-<img src="./docs/ranger.png" width="300" />
 
 ## Build the package
 
@@ -26,53 +24,37 @@ $ sudo apt install -y ros-$ROS_DISTRO-teleop-twist-keyboard
 
 ```bash
 $ cd ~/catkin_ws/src
-$ git clone https://github.com/agilexrobotics/ugv_sdk.git
-$ git clone https://github.com/agilexrobotics/ranger_ros.git
+$ git clone https://github.com/agilexrobotics/ranger_ros.git -b air_delta
 $ cd ..
 $ catkin_make
 ```
 3. Setup CAN-To-USB adapter
 
 * Enable gs_usb kernel module(If you have already added this module, you do not need to add it)
-    ```
+    ```bash
     $ sudo modprobe gs_usb
+    $ sudo ip link set can0 up type can bitrate 500000
     ```
     
-* first time use scout-ros package
-   ```
-   $ rosrun ranger_bringup setup_can2usb.bash
-   ```
-   
-* if not the first time use scout-ros package(Run this command every time you turn off the power) 
-   ```
-   $ rosrun ranger_bringup bringup_can2usb.bash
-   ```
-   
 * Testing command
-    ```
-    # receiving data from can0
-    $ candump can0
-    ```
+   ```bash
+   # install can utils
+   $ sudo apt install -y can-utils
+   # receiving data from can0
+   $ candump can0
+   ```
+   
 
 4. Launch ROS nodes
 
+   > Ranger Air and Ranger Delta share the same ROS package.
+
 * Start the base node for ranger
 
-    ```shell
-    $ roslaunch ranger_bringup ranger.launch #for ranger
-    ```
-
-* Start the base node for ranger_mini_v1
-
-    ```shell
-    $ roslaunch ranger_bringup ranger_mini_v1.launch #for ranger_mini 1.0
-    ```
-
-* Start the base node for ranger_mini_v2
-
     ```bash
-    $ roslaunch ranger_bringup ranger_mini_v2.launch #for ranger_mini 2.0
+    $ roslaunch agx_bringup robot.launch
     ```
+
 * Use keyboard to control ranger
     ```bash
     $ rosrun teleop_twist_keyboard teleop_twist_keyboard.py
@@ -81,26 +63,62 @@ $ catkin_make
 
 ## ROS interface
 
-### Parameters
+- ### 1. /bms_alarm_warning
 
-* can_device (string): **can0**
-* robot_model (string): **ranger**/ranger_mini_v1/ranger_mini_v2
-* update_rate (int): **50**
-* base_frame (string): **base_link**
-* odom_frame (string): **odom**
-* publish_odom_tf (bool): **true**
-* odom_topic_name (string): **odom**
+  - **Description**: BMS (Battery Management System) alarm and warning messages.
 
-### Published topics
+  ### 2. /bms_status
 
-* /system_state (ranger_msgs::SystemState)
-* /motion_state (ranger_msgs::MotionState)
-* /actuator_state (ranger_msgs::ActuatorStateArray)
-* /odom (nav_msgs::Odometry)
-* /battery_state (ranger_msgs::BatteryState)
+  - **Description**: BMS (Battery Management System) status feedback messages.
 
-### Subscribed topics
+  ### 3. /chassis_motion_feedback
 
-* /cmd_vel (geometry_msgs::Twist)
+  - **Description**: Chassis motion data feedback messages.
 
-### Services
+  ### 4. /light_control_status
+
+  - **Description**: Light control status feedback messages.
+
+  ### 5. /motion_mode_feedback
+
+  - **Description**: Motion mode feedback messages.
+
+  ### 6. /motor_high_speed_feedback
+
+  - **Description**: Motor high-speed feedback data messages.
+
+  ### 7. /motor_low_speed_feedback
+
+  - **Description**: Motor low-speed feedback data messages.
+
+  ### 8. /remote_control_status
+
+  - **Description**: Remote control command status feedback messages.
+
+  ### 9. /steering_angles
+
+  - **Description**: Four-wheel steering angle feedback messages.
+
+  ### 10. /system_status
+
+  - **Description**: System status feedback messages.
+
+  ### 11. /front_wheel_odometry
+
+  - **Description**: Wheel odometry data feedback messages.
+
+  ### 12. /back_wheel_odometry
+
+  - **Description**: Wheel odometry data feedback messages.
+
+  ### 13. /wheel_speeds
+
+  - **Description**: Four-wheel speed feedback messages.
+
+  ### 14. /sub_cmd_vel
+
+  - **Description**: Subscribed velocity command to drive the chassis. This topic name can be remapped in the launch file.
+
+  ### 15. /wheel/odom
+
+  - **Description**: Wheel odometry calculated by the chassis. This topic name can be remapped in the launch file.
