@@ -1,0 +1,17 @@
+# BMSAlarmWarning.msg - BMS报警和警告信息
+uint8 alarm1
+uint8 alarm2
+uint8 warn1
+uint8 warn2
+bool over_voltage_alarm
+bool under_voltage_alarm
+bool high_temp_alarm
+bool low_temp_alarm
+bool discharge_overcurrent_alarm
+bool charge_overcurrent_alarm
+bool over_voltage_warning
+bool under_voltage_warning
+bool high_temp_warning
+bool low_temp_warning
+bool discharge_overcurrent_warning
+bool charge_overcurrent_warning

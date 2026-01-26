@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="model" />    
+
+  <node name="agx_bringup_node" pkg="agx_bringup" type="agx_bringup_node" output="screen">
+    <rosparam command="load" file="$(find agx_bringup)/config/robot_params.yaml" />
+    <param name="debug" value="false" />
+    <param name="pub_odom_tf" value="false" />
+    <param name="odom_frame" value="odom" />
+    <param name="base_frame" value="base_footprint" />
+    <param name="interface" value="can0" />
+    <param name="wheel_distance" value="0.345" />
+    <remap from="/sub_cmd_vel" to="/cmd_vel" />
+    <remap from="/wheel/odom" to="/wheel/odom" />
+  </node>
+</launch>

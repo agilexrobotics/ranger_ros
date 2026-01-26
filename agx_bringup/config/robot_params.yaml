@@ -1,0 +1,14 @@
+# robot_params.yaml
+
+# 机器人物理参数
+track: 0.34                    # 轮距 (m)
+wheelbase: 0.39               # 轴距 (m)
+
+# 性能参数
+spin_angular_ratio: 1.0       # 自旋角速度比例系数
+linear_speed_ratio: 1.0       # 线速度比例系数
+
+# 坐标系参数
+map_frame: "map"              # 地图坐标系
+odom_frame: "odom"            # 里程计坐标系  
+base_frame: "base_link"       # 机器人基座坐标系

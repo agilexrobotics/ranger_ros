@@ -1,0 +1,3 @@
+# BackWheelOdometry.msg - 后车轮里程计反馈
+float64 left_wheel_odom   # 左轮里程计数
+float64 right_wheel_odom  # 右轮里程计数
