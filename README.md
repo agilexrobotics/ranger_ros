@@ -7,7 +7,7 @@ This repository contains ROS support packages for the Ranger Air and Ranger Delt
 * Ranger Delta
 <img src="./img/ranger_air.png" width="500" />
 
-* Ranger Mini Air
+* Ranger  Air
 <img src="./img/ranger_delta.png" width="350" />
 
 
