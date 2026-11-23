@@ -44,7 +44,7 @@ struct RangerMiniV1Params {
 
 struct RangerMiniV2Params {
   static constexpr double track =
-      0.364;  // in meter (left & right wheel distance) //ranger-mini 0.364
+      0.370;  // in meter (left & right wheel distance) //ranger-mini 0.364
   static constexpr double wheelbase =
       0.494;  // in meter (front & rear wheel distance) //ranger-mini 0.494
 
